@@ -23,30 +23,33 @@
                 <el-button type="primary" @click="openAddDialog" :icon="Plus">新增</el-button>
             </div>
 
-            <!-- 数据表格 -->
-            <el-table :data="tableData" v-loading="loading" stripe border style="width: 100%">
-                <el-table-column type="index" label="序号" width="70" align="center"
-                    :index="(index) => (currentPage - 1) * pageSize + index + 1" />
-                <el-table-column prop="username" label="姓名" width="150" align="center" />
-                <el-table-column prop="email" label="邮箱" min-width="200" show-overflow-tooltip />
+            <!-- 数据表格容器 -->
+            <div class="table-wrapper">
+                <el-table :data="tableData" v-loading="loading" stripe border style="width: 100%" height="100%">
+                    <el-table-column type="index" label="序号" width="70" align="center"
+                        :index="(index) => (currentPage - 1) * pageSize + index + 1" />
+                    <el-table-column prop="username" label="姓名" width="200" align="center" />
+                    <el-table-column prop="email" label="邮箱" min-width="200" show-overflow-tooltip align="center" />
+                    <el-table-column prop="role" label="角色" min-width="200" align="center" />
 
-                <el-table-column label="操作" width="240" align="center" fixed="right">
-                    <template #default="scope">
-                        <el-button link type="info" size="small" @click="openViewDialog(scope.row)" :icon="View">
-                            查看
-                        </el-button>
-                        <el-button link type="primary" size="small" @click="openEditDialog(scope.row)" :icon="Edit">
-                            编辑
-                        </el-button>
-                        <el-button link type="danger" size="small" @click="handleDelete(scope.$index, scope.row)"
-                            :icon="Delete">
-                            删除
-                        </el-button>
-                    </template>
-                </el-table-column>
-            </el-table>
+                    <el-table-column label="操作" width="240" align="center" fixed="right">
+                        <template #default="scope">
+                            <el-button link type="info" size="small" @click="openViewDialog(scope.row)" :icon="View">
+                                查看
+                            </el-button>
+                            <el-button link type="primary" size="small" @click="openEditDialog(scope.row)" :icon="Edit">
+                                编辑
+                            </el-button>
+                            <el-button link type="danger" size="small" @click="handleDelete(scope.$index, scope.row)"
+                                :icon="Delete">
+                                删除
+                            </el-button>
+                        </template>
+                    </el-table-column>
+                </el-table>
+            </div>
 
-            <!-- 分页 -->
+            <!-- 分页栏区域 -->
             <div class="pagination-container">
                 <el-pagination v-model:current-page="currentPage" v-model:page-size="pageSize"
                     :page-sizes="[5, 10, 20, 50]" background layout="total, sizes, prev, pager, next, jumper"
@@ -199,12 +202,15 @@
     .user-list-container {
         padding: 20px;
         background-color: #f0f2f5;
-        min-height: calc(100vh - 120px);
+        height: calc(100vh - 120px);
+        display: flex;
+        flex-direction: column;
     }
 
     .search-card {
         margin-bottom: 16px;
         border-radius: 8px;
+        flex-shrink: 0;
     }
 
     .search-form {
@@ -213,6 +219,17 @@
 
     .table-card {
         border-radius: 8px;
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+    }
+
+    .table-card :deep(.el-card__body) {
+        display: flex;
+        flex-direction: column;
+        flex: 1;
+        overflow: hidden;
     }
 
     .toolbar {
@@ -220,12 +237,22 @@
         display: flex;
         justify-content: space-between;
         align-items: center;
+        flex-shrink: 0;
+    }
+
+    .table-wrapper {
+        flex: 1;
+        overflow: hidden;
+        min-height: 0;
     }
 
     .pagination-container {
         margin-top: 20px;
+        padding-top: 20px;
         display: flex;
         justify-content: flex-end;
+        flex-shrink: 0;
+        border-top: 1px solid #f0f0f0;
     }
 
     :deep(.el-card__body) {
