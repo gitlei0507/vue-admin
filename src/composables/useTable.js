@@ -1,7 +1,7 @@
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { onMounted, ref } from 'vue'
 
-export function useTable(apiFn, searchForm) {
+export function useTable(apiFn, searchForm, deleteUser) {
     const tableData = ref([])
     const loading = ref(false)
 
@@ -39,10 +39,18 @@ export function useTable(apiFn, searchForm) {
                 cancelButtonText: '取消',
                 type: 'warning',
             }
-        ).then(() => {
-            tableData.value.splice(tableData.value.indexOf(row), 1)
-            ElMessage.success('删除成功')
-            if (onSuccess) onSuccess()
+        ).then(async () => {
+            try {
+                const res = await deleteUser(row)
+                if (res === 1) {
+                    ElMessage.success('删除用户成功')
+                    handleSearch()
+                } else {
+                    ElMessage.error('删除用户失败')
+                }
+            } catch (error) {
+                ElMessage.error(`删除用户失败：${error.message || error}`)
+            }
         }).catch(() => {
             // 点击取消
         })

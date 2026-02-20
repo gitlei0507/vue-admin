@@ -63,7 +63,7 @@
 </template>
 
 <script setup>
-    import { createUser, list, updateUser } from '@/api/user';
+    import { createUser, deleteUser, list, updateUser } from '@/api/user';
     import { useTable } from '@/composables/useTable';
     import { useUser } from '@/composables/useUser';
     import { reactive } from 'vue';
@@ -75,7 +75,7 @@
 
 
 
-    const { tableData, loading, handleSearch, resetSearch, handleDelete } = useTable(list, searchForm)
+    const { tableData, loading, handleSearch, resetSearch, handleDelete } = useTable(list, searchForm, deleteUser)
     const { dialogVisible, submitLoading, userForm, userFormRef, openAddDialog, openEditDialog, submitForm, rules } = useUser(createUser, updateUser, handleSearch)
 
 
