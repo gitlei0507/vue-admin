@@ -27,7 +27,8 @@
                     <div class="text-gray-600">面包屑导航 (待实现)</div>
                     <div class="flex items-center gap-2">
                         <el-avatar :size="30" :src="userInfo.avatar" />
-                        <span class="text-sm">{{ userInfo.username }}</span>
+                        <span class="text-sm">用户：{{ userInfo.username }}</span>
+                        <span class="text-sm">角色：{{ userInfo.role }}</span>
                         <el-button type="danger" @click="logout">注销</el-button>
                     </div>
                 </el-header>

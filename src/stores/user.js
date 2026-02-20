@@ -22,4 +22,7 @@ export const useUserStore = defineStore('userStore', () => {
         setUserInfo,
         removeUserInfo
     }
+}, {
+    // 开启持久化，防止刷新后，数据丢失
+    persist: true
 })

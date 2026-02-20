@@ -7,6 +7,8 @@
 import router from '@/router';
 // 导入 Pinia 状态管理库
 import { createPinia } from 'pinia';
+// 导入 Pinia 持久化
+import piniaPluginPersistedstate from 'pinia-plugin-persistedstate';
 // 导入 Vue 核心方法
 import { createApp } from 'vue';
 // 导入根组件
@@ -39,7 +41,9 @@ for (const [key, component] of Object.entries(ElementPlusIconsVue)) {
 // 使用 Element Plus 并配置中文语言包
 app.use(ElementPlus, { locale: zhCn })
 // 使用 Pinia 状态管理
-app.use(createPinia())
+const pinia = createPinia()
+pinia.use(piniaPluginPersistedstate)
+app.use(pinia)
 // 使用路由
 app.use(router)
 // 将应用挂载到 #app 元素上
