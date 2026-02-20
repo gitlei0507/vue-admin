@@ -90,6 +90,7 @@ export function useUser(createUser, updateUser, handleSearch) {
         submitLoading,
         userForm,
         userFormRef,
+        isEdit,
         openAddDialog,
         openEditDialog,
         submitForm,
