@@ -1,5 +1,5 @@
 import { ElMessage } from "element-plus"
-import { ref } from "vue"
+import { nextTick, ref } from "vue"
 
 
 export function useUser(createUser, handleSearch) {
@@ -37,6 +37,7 @@ export function useUser(createUser, handleSearch) {
         userForm.email = ''
         userForm.role = 'user'
         dialogVisible.value = true
+        nextTick(() => userFormRef.value.clearValidate())
     }
 
     // 提交表单
