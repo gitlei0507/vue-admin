@@ -22,6 +22,10 @@ import 'element-plus/dist/index.css';
 // 导入 Element Plus 所有图标组件
 import * as ElementPlusIconsVue from '@element-plus/icons-vue';
 
+// 导入 Element Plus 中文语言包
+import ElementPlus from 'element-plus';
+import zhCn from 'element-plus/dist/locale/zh-cn.mjs';
+
 
 // 创建 Vue 应用实例
 const app = createApp(App)
@@ -32,6 +36,8 @@ for (const [key, component] of Object.entries(ElementPlusIconsVue)) {
     app.component(key, component)
 }
 
+// 使用 Element Plus 并配置中文语言包
+app.use(ElementPlus, { locale: zhCn })
 // 使用 Pinia 状态管理
 app.use(createPinia())
 // 使用路由

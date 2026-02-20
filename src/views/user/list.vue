@@ -12,7 +12,8 @@
         </div>
 
         <el-table :data="tableData" v-loading="loading" stripe style="width: 100%">
-            <el-table-column prop="id" label="ID" width="80" />
+            <el-table-column type="index" label="序号" width="60"
+                :index="(index) => (currentPage - 1) * pageSize + index + 1" />
             <el-table-column prop="username" label="姓名" width="180" />
             <el-table-column prop="email" label="邮箱" width="200" />
 
@@ -27,6 +28,13 @@
                 </template>
             </el-table-column>
         </el-table>
+
+        <!-- 分页 -->
+        <div class="mt-4 flex justify-start">
+            <el-pagination v-model:current-page="currentPage" v-model:page-size="pageSize" :page-sizes="[5, 10, 20, 50]"
+                layout="total, sizes, prev, pager, next, jumper" :total="total" @current-change="handleCurrentChange"
+                @size-change="handleSizeChange" />
+        </div>
     </div>
 
 
@@ -75,8 +83,29 @@
 
 
 
-    const { tableData, loading, handleSearch, resetSearch, handleDelete } = useTable(list, searchForm, deleteUser)
-    const { dialogVisible, submitLoading, userForm, userFormRef, openAddDialog, openEditDialog, submitForm, rules } = useUser(createUser, updateUser, handleSearch)
+    const {
+        tableData,
+        loading,
+        currentPage,
+        pageSize,
+        total,
+        handleSearch,
+        resetSearch,
+        handleDelete,
+        handleCurrentChange,
+        handleSizeChange
+    } = useTable(list, searchForm, deleteUser)
+
+    const {
+        dialogVisible,
+        submitLoading,
+        userForm,
+        userFormRef,
+        openAddDialog,
+        openEditDialog,
+        submitForm,
+        rules
+    } = useUser(createUser, updateUser, handleSearch)
 
 
 
