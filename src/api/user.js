@@ -38,8 +38,6 @@ export function updateUser(data) {
 
 // 删除用户
 export function deleteUser(row) {
-    console.log('deluser');
-
     return request({
         url: '/user/delete',
         method: 'post',
