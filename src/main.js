@@ -1,0 +1,38 @@
+/**
+ * 应用入口文件
+ * 负责初始化 Vue 应用并配置全局插件和组件
+ */
+
+// 导入路由实例
+import router from '@/router'
+// 导入 Pinia 状态管理库
+import { createPinia } from 'pinia'
+// 导入 Vue 核心方法
+import { createApp } from 'vue'
+// 导入根组件
+import App from './App.vue'
+
+// 引入 Tailwind CSS 样式
+import './assets/main.css'
+
+// 引入 Element Plus 样式
+import 'element-plus/dist/index.css'
+
+// 导入 Element Plus 所有图标组件
+import * as ElementPlusIconsVue from '@element-plus/icons-vue'
+
+// 创建 Vue 应用实例
+const app = createApp(App)
+
+// 全局注册所有 Element Plus 图标组件
+// 注册后可以在任何组件中直接使用，如 <el-icon><Edit /></el-icon>
+for (const [key, component] of Object.entries(ElementPlusIconsVue)) {
+    app.component(key, component)
+}
+
+// 使用 Pinia 状态管理
+app.use(createPinia())
+// 使用路由
+app.use(router)
+// 将应用挂载到 #app 元素上
+app.mount('#app')
