@@ -28,18 +28,21 @@
 
 
     <el-dialog v-model="dialogVisible" title="新增用户" width="600px" :close-on-click-modal="false">
-        <el-form :model="form" label-width="80px">
-            <el-form-item label="用户名">
-                <el-input v-model="form.username" />
+        <el-form :model="userForm" ref="userFormRef" :rules="rules" label-width="80px">
+            <el-form-item label="用户ID" prop="uid">
+                <el-input v-model="userForm.uid" />
             </el-form-item>
-            <el-form-item label="密码">
-                <el-input v-model="form.password" type="password" show-password />
+            <el-form-item label="用户名" prop="username">
+                <el-input v-model="userForm.username" />
             </el-form-item>
-            <el-form-item label="邮箱">
-                <el-input v-model="form.email" />
+            <el-form-item label="密码" prop="password">
+                <el-input v-model="userForm.password" type="password" show-password />
+            </el-form-item>
+            <el-form-item label="邮箱" prop="email">
+                <el-input v-model="userForm.email" />
             </el-form-item>
             <el-form-item label="角色">
-                <el-select v-model="form.role" placeholder="请选择角色">
+                <el-select v-model="userForm.role" placeholder="请选择角色">
                     <el-option label="管理员" value="admin" />
                     <el-option label="普通用户" value="user" />
                 </el-select>
@@ -54,8 +57,9 @@
 </template>
 
 <script setup>
-    import { list } from '@/api/user';
+    import { createUser, list } from '@/api/user';
     import { useTable } from '@/composables/useTable';
+    import { useUser } from '@/composables/useUser';
     import { reactive } from 'vue';
 
     const searchForm = reactive({
@@ -63,25 +67,13 @@
         email: ''
     })
 
-    const dialogVisible = ref(false)
-
-    const { tableData, loading, handleSearch, resetSearch, handleDelete } = useTable(list, searchForm);
 
 
-    // 初始化表单数据
-    const form = reactive({
-        username: '',
-        password: '',
-        email: '',
-        role: 'user'
-    })
+    const { tableData, loading, handleSearch, resetSearch, handleDelete } = useTable(list, searchForm)
+    const { dialogVisible, submitLoading, userForm, userFormRef, openAddDialog, submitForm, rules } = useUser(createUser, handleSearch)
 
-    // 打开弹窗并重置表单
-    const openAddDialog = () => {
-        form.username = ''
-        form.password = ''
-        form.email = ''
-        form.role = 'user'
-        dialogVisible.value = true
-    }
+
+
+
+
 </script>

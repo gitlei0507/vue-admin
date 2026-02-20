@@ -4,22 +4,24 @@
  */
 
 // 导入路由实例
-import router from '@/router'
+import router from '@/router';
 // 导入 Pinia 状态管理库
-import { createPinia } from 'pinia'
+import { createPinia } from 'pinia';
 // 导入 Vue 核心方法
-import { createApp } from 'vue'
+import { createApp } from 'vue';
 // 导入根组件
-import App from './App.vue'
+import App from './App.vue';
+
 
 // 引入 Tailwind CSS 样式
-import './assets/main.css'
+import './assets/main.css';
 
 // 引入 Element Plus 样式
-import 'element-plus/dist/index.css'
+import 'element-plus/dist/index.css';
 
 // 导入 Element Plus 所有图标组件
-import * as ElementPlusIconsVue from '@element-plus/icons-vue'
+import * as ElementPlusIconsVue from '@element-plus/icons-vue';
+
 
 // 创建 Vue 应用实例
 const app = createApp(App)

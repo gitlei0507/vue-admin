@@ -1,11 +1,11 @@
-import request from '@/utils/request'
+import request from '@/utils/request';
 
 // 获取用户列表接口
 export function list(data) {
     return request({
         url: '/user/list',
         method: 'post',
-        data: data
+        data
     })
 }
 
@@ -14,7 +14,16 @@ export function login(data) {
     return request({
         url: '/user/login',
         method: 'post',
-        data: data
+        data
+    })
+}
+
+// 新增用户
+export function createUser(data) {
+    return request({
+        url: '/user/add',
+        method: 'post',
+        data
     })
 }
 
