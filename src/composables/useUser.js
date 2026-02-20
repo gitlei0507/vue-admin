@@ -8,6 +8,7 @@ export function useUser(createUser, updateUser, handleSearch) {
     const submitLoading = ref(false)
     const userFormRef = ref()
     const isEdit = ref(false)
+    const isView = ref(false)
 
     // 初始化表单数据
     const userForm = reactive({
@@ -34,6 +35,7 @@ export function useUser(createUser, updateUser, handleSearch) {
     // 打开新增弹窗并重置表单
     const openAddDialog = () => {
         isEdit.value = false
+        isView.value = false
         userForm.id = ''
         userForm.uid = ''
         userForm.username = ''
@@ -49,6 +51,7 @@ export function useUser(createUser, updateUser, handleSearch) {
         console.log('@@', row);
 
         isEdit.value = true
+        isView.value = false
         userForm.id = row.id || ''
         userForm.uid = row.uid || ''
         userForm.username = row.username || ''
@@ -57,6 +60,19 @@ export function useUser(createUser, updateUser, handleSearch) {
         userForm.role = row.role || 'user'
         dialogVisible.value = true
         nextTick(() => userFormRef.value?.clearValidate())
+    }
+
+    // 打开查看弹窗
+    const openViewDialog = (row) => {
+        isEdit.value = false
+        isView.value = true
+        userForm.id = row.id || ''
+        userForm.uid = row.uid || ''
+        userForm.username = row.username || ''
+        userForm.password = row.password || ''
+        userForm.email = row.email || ''
+        userForm.role = row.role || 'user'
+        dialogVisible.value = true
     }
 
     // 提交表单
@@ -91,8 +107,10 @@ export function useUser(createUser, updateUser, handleSearch) {
         userForm,
         userFormRef,
         isEdit,
+        isView,
         openAddDialog,
         openEditDialog,
+        openViewDialog,
         submitForm,
         rules
     }

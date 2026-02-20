@@ -20,7 +20,7 @@
         <el-card class="table-card" shadow="never">
             <!-- 操作栏 -->
             <div class="toolbar">
-                <el-button type="primary" @click="openAddDialog" :icon="Plus">新增用户</el-button>
+                <el-button type="primary" @click="openAddDialog" :icon="Plus">新增</el-button>
             </div>
 
             <!-- 数据表格 -->
@@ -30,8 +30,11 @@
                 <el-table-column prop="username" label="姓名" width="150" align="center" />
                 <el-table-column prop="email" label="邮箱" min-width="200" show-overflow-tooltip />
 
-                <el-table-column label="操作" width="180" align="center" fixed="right">
+                <el-table-column label="操作" width="240" align="center" fixed="right">
                     <template #default="scope">
+                        <el-button link type="info" size="small" @click="openViewDialog(scope.row)" :icon="View">
+                            查看
+                        </el-button>
                         <el-button link type="primary" size="small" @click="openEditDialog(scope.row)" :icon="Edit">
                             编辑
                         </el-button>
@@ -53,34 +56,93 @@
     </div>
 
 
-    <!-- 用户表单弹窗 --> <!-- 用户表单弹窗 -->
-    <el-dialog v-model="dialogVisible" :title="isEdit ? '编辑用户' : '新增用户'" width="600px" :close-on-click-modal="false">
-        <el-form :model="userForm" ref="userFormRef" :rules="rules" label-width="90px">
+    <!-- 用户表单弹窗 -->
+    <el-dialog v-model="dialogVisible" :title="isView ? '查看用户' : (isEdit ? '编辑用户' : '新增用户')" width="560px"
+        :close-on-click-modal="false" :destroy-on-close="true" draggable>
+        <el-form :model="userForm" ref="userFormRef" :rules="rules" label-width="90px" class="user-form">
             <el-form-item label="ID" prop="id" v-show="false">
                 <el-input v-model="userForm.id" />
             </el-form-item>
+
             <el-form-item label="用户ID" prop="uid">
-                <el-input v-model="userForm.uid" placeholder="请输入用户ID" clearable />
+                <el-input v-model="userForm.uid" placeholder="请输入用户ID" :readonly="isView" clearable size="large">
+                    <template #prefix>
+                        <el-icon>
+                            <User />
+                        </el-icon>
+                    </template>
+                </el-input>
             </el-form-item>
+
             <el-form-item label="用户名" prop="username">
-                <el-input v-model="userForm.username" placeholder="请输入用户名" clearable />
+                <el-input v-model="userForm.username" placeholder="请输入用户名" :readonly="isView" clearable size="large">
+                    <template #prefix>
+                        <el-icon>
+                            <UserFilled />
+                        </el-icon>
+                    </template>
+                </el-input>
             </el-form-item>
+
             <el-form-item label="密码" prop="password">
-                <el-input v-model="userForm.password" type="password" placeholder="请输入密码" show-password clearable />
+                <el-input v-model="userForm.password" type="password" placeholder="请输入密码" :readonly="isView"
+                    show-password clearable size="large">
+                    <template #prefix>
+                        <el-icon>
+                            <Lock />
+                        </el-icon>
+                    </template>
+                </el-input>
             </el-form-item>
+
             <el-form-item label="邮箱" prop="email">
-                <el-input v-model="userForm.email" placeholder="请输入邮箱" clearable />
+                <el-input v-model="userForm.email" placeholder="请输入邮箱地址" :readonly="isView" clearable size="large">
+                    <template #prefix>
+                        <el-icon>
+                            <Message />
+                        </el-icon>
+                    </template>
+                </el-input>
             </el-form-item>
+
             <el-form-item label="角色" prop="role">
-                <el-select v-model="userForm.role" placeholder="请选择角色" style="width: 100%">
-                    <el-option label="管理员" value="admin" />
-                    <el-option label="普通用户" value="user" />
+                <el-select v-model="userForm.role" placeholder="请选择角色" :disabled="isView" style="width: 100%"
+                    size="large">
+                    <template #prefix>
+                        <el-icon>
+                            <Avatar />
+                        </el-icon>
+                    </template>
+                    <el-option label="管理员" value="admin">
+                        <el-icon style="vertical-align: middle; margin-right: 8px;">
+                            <Star />
+                        </el-icon>
+                        <span>管理员</span>
+                    </el-option>
+                    <el-option label="普通用户" value="user">
+                        <el-icon style="vertical-align: middle; margin-right: 8px;">
+                            <User />
+                        </el-icon>
+                        <span>普通用户</span>
+                    </el-option>
                 </el-select>
             </el-form-item>
         </el-form>
+
         <template #footer>
-            <el-button @click="dialogVisible = false">取消</el-button>
-            <el-button type="primary" @click="submitForm" :loading="submitLoading">确定</el-button>
+            <div class="dialog-footer">
+                <el-button @click="dialogVisible = false" size="large" v-if="isView">
+                    关闭
+                </el-button>
+                <template v-else>
+                    <el-button @click="dialogVisible = false" size="large">
+                        取消
+                    </el-button>
+                    <el-button type="primary" @click="submitForm" :loading="submitLoading" size="large">
+                        {{ submitLoading ? '提交中...' : '确定' }}
+                    </el-button>
+                </template>
+            </div>
         </template>
     </el-dialog>
 
@@ -90,7 +152,7 @@
     import { createUser, deleteUser, list, updateUser } from '@/api/user';
     import { useTable } from '@/composables/useTable';
     import { useUser } from '@/composables/useUser';
-    import { Delete, Edit, Plus, Refresh, Search } from '@element-plus/icons-vue';
+    import { Avatar, Delete, Edit, Lock, Message, Plus, Refresh, Search, Star, User, UserFilled, View } from '@element-plus/icons-vue';
     import { reactive } from 'vue';
 
     const searchForm = reactive({
@@ -119,8 +181,10 @@
         userForm,
         userFormRef,
         isEdit,
+        isView,
         openAddDialog,
         openEditDialog,
+        openViewDialog,
         submitForm,
         rules
     } = useUser(createUser, updateUser, handleSearch)
@@ -180,5 +244,62 @@
 
     :deep(.el-button + .el-button) {
         margin-left: 8px;
+    }
+
+    /* 弹窗样式 */
+    .user-form {
+        padding: 10px 20px 0;
+    }
+
+    .dialog-footer {
+        display: flex;
+        justify-content: flex-end;
+        gap: 12px;
+    }
+
+    :deep(.el-dialog__header) {
+        padding: 20px 20px 15px;
+        border-bottom: 1px solid #f0f0f0;
+        margin-right: 0;
+    }
+
+    :deep(.el-dialog__body) {
+        padding: 20px 20px 10px;
+    }
+
+    :deep(.el-dialog__footer) {
+        padding: 15px 20px 20px;
+        border-top: 1px solid #f0f0f0;
+    }
+
+    :deep(.el-form-item) {
+        margin-bottom: 22px;
+    }
+
+    :deep(.el-input__prefix) {
+        display: flex;
+        align-items: center;
+    }
+
+    :deep(.el-select .el-input__prefix) {
+        left: 8px;
+    }
+
+    /* 只读模式样式 */
+    :deep(.el-input[readonly] .el-input__wrapper) {
+        background-color: #f5f7fa;
+        box-shadow: 0 0 0 1px #e4e7ed inset;
+        cursor: default;
+    }
+
+    :deep(.el-input[readonly] .el-input__inner) {
+        color: #606266;
+        cursor: default;
+    }
+
+    :deep(.el-select.is-disabled .el-input__wrapper) {
+        background-color: #f5f7fa;
+        box-shadow: 0 0 0 1px #e4e7ed inset;
+        cursor: default;
     }
 </style>
