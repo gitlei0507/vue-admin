@@ -46,7 +46,10 @@ export function useTable(apiFn, searchForm, deleteUser) {
     }
 
     // 查询
-    const handleSearch = () => fetchData()
+    const handleSearch = () => {
+        currentPage.value = 1
+        fetchData()
+    }
 
     // 重置
     const resetSearch = () => {
