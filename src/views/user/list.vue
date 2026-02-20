@@ -18,6 +18,9 @@
 
             <el-table-column label="操作" width="150">
                 <template #default="scope">
+                    <el-button size="small" type="primary" @click="openEditDialog(scope.row)">
+                        修改
+                    </el-button>
                     <el-button size="small" type="danger" @click="handleDelete(scope.$index, scope.row)">
                         删除
                     </el-button>
@@ -29,6 +32,9 @@
 
     <el-dialog v-model="dialogVisible" title="新增用户" width="600px" :close-on-click-modal="false">
         <el-form :model="userForm" ref="userFormRef" :rules="rules" label-width="80px">
+            <el-form-item label="ID" prop="id" v-show="false">
+                <el-input v-model="userForm.id" />
+            </el-form-item>
             <el-form-item label="用户ID" prop="uid">
                 <el-input v-model="userForm.uid" />
             </el-form-item>
@@ -57,7 +63,7 @@
 </template>
 
 <script setup>
-    import { createUser, list } from '@/api/user';
+    import { createUser, list, updateUser } from '@/api/user';
     import { useTable } from '@/composables/useTable';
     import { useUser } from '@/composables/useUser';
     import { reactive } from 'vue';
@@ -70,7 +76,7 @@
 
 
     const { tableData, loading, handleSearch, resetSearch, handleDelete } = useTable(list, searchForm)
-    const { dialogVisible, submitLoading, userForm, userFormRef, openAddDialog, submitForm, rules } = useUser(createUser, handleSearch)
+    const { dialogVisible, submitLoading, userForm, userFormRef, openAddDialog, openEditDialog, submitForm, rules } = useUser(createUser, updateUser, handleSearch)
 
 
 

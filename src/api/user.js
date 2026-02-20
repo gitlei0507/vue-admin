@@ -27,3 +27,12 @@ export function createUser(data) {
     })
 }
 
+// 修改用户
+export function updateUser(data) {
+    return request({
+        url: '/user/update',
+        method: 'post',
+        data
+    })
+}
+

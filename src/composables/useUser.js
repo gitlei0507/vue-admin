@@ -1,15 +1,17 @@
 import { ElMessage } from "element-plus"
-import { nextTick, ref } from "vue"
+import { nextTick, reactive, ref } from "vue"
 
 
-export function useUser(createUser, handleSearch) {
+export function useUser(createUser, updateUser, handleSearch) {
 
     const dialogVisible = ref(false)
     const submitLoading = ref(false)
     const userFormRef = ref()
+    const isEdit = ref(false)
 
     // 初始化表单数据
     const userForm = reactive({
+        id: '',
         uid: '',
         username: '',
         password: '',
@@ -29,8 +31,10 @@ export function useUser(createUser, handleSearch) {
         role: [{ required: true, message: '请选择角色', trigger: 'change' }]
     }
 
-    // 打开弹窗并重置表单
+    // 打开新增弹窗并重置表单
     const openAddDialog = () => {
+        isEdit.value = false
+        userForm.id = ''
         userForm.uid = ''
         userForm.username = ''
         userForm.password = ''
@@ -38,6 +42,21 @@ export function useUser(createUser, handleSearch) {
         userForm.role = 'user'
         dialogVisible.value = true
         nextTick(() => userFormRef.value.clearValidate())
+    }
+
+    // 打开修改弹窗并重置表单
+    const openEditDialog = (row) => {
+        console.log('@@', row);
+
+        isEdit.value = true
+        userForm.id = row.id || ''
+        userForm.uid = row.uid || ''
+        userForm.username = row.username || ''
+        userForm.password = row.password || ''
+        userForm.email = row.email || ''
+        userForm.role = row.role || 'user'
+        dialogVisible.value = true
+        nextTick(() => userFormRef.value?.clearValidate())
     }
 
     // 提交表单
@@ -48,17 +67,19 @@ export function useUser(createUser, handleSearch) {
         if (!valid) return
 
         submitLoading.value = true
+        const action = isEdit.value ? '修改' : '新增'
         try {
-            const res = await createUser(userForm)
+            const apiFn = isEdit.value ? updateUser : createUser
+            const res = await apiFn(userForm)
             if (res == 1) {
-                ElMessage.success('新增用户成功')
+                ElMessage.success(`${action}用户成功`)
                 dialogVisible.value = false
                 handleSearch()
             } else {
-                ElMessage.error('新增用户失败')
+                ElMessage.error(`${action}用户失败`)
             }
         } catch (error) {
-            ElMessage.error('新增用户失败', error)
+            ElMessage.error(`${action}用户失败：${error.message || error}`)
         } finally {
             submitLoading.value = false
         }
@@ -70,6 +91,7 @@ export function useUser(createUser, handleSearch) {
         userForm,
         userFormRef,
         openAddDialog,
+        openEditDialog,
         submitForm,
         rules
     }
