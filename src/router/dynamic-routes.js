@@ -4,7 +4,7 @@
  */
 
 // 导入 Element Plus 所有图标组件，用于菜单图标的动态渲染
-import * as ElementPlusIconsVue from '@element-plus/icons-vue'
+import * as ElementPlusIconsVue from '@element-plus/icons-vue';
 
 /**
  * 使用 Vite 的 glob 导入功能，批量导入 views 目录下的所有 .vue 组件
@@ -13,8 +13,9 @@ import * as ElementPlusIconsVue from '@element-plus/icons-vue'
  */
 const viewModules = import.meta.glob('@/views/**/*.vue')
 
+
 // 打印 viewModules 的所有 key，方便调试
-console.log('[dynamic-route] 可用的组件路径:', Object.keys(viewModules))
+// console.log('[dynamic-route] 可用的组件路径:', Object.keys(viewModules))
 
 /**
  * 规范化视图路径
@@ -46,7 +47,7 @@ const resolveComponent = (viewPath) => {
     // 构建完整的模块路径 key
     const key = `/src/views/${normalized}`
 
-    console.log(`[dynamic-route] 尝试加载组件: ${viewPath} -> ${key}`)
+    // console.log(`[dynamic-route] 尝试加载组件: ${viewPath} -> ${key}`)
 
     // 从 viewModules 对象中获取对应的动态导入函数
     const component = viewModules[key]

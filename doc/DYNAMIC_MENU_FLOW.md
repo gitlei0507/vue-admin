@@ -6,10 +6,11 @@
 - [2. 技术架构](#2-技术架构)
 - [3. 核心模块](#3-核心模块)
 - [4. 数据流转](#4-数据流转)
-- [5. 实现详解](#5-实现详解)
-- [6. 使用示例](#6-使用示例)
-- [7. 注意事项](#7-注意事项)
-- [8. 常见问题](#8-常见问题)
+- [5. 方法调用流程](#5-方法调用流程)
+- [6. 实现详解](#6-实现详解)
+- [7. 使用示例](#7-使用示例)
+- [8. 注意事项](#8-注意事项)
+- [9. 常见问题](#9-常见问题)
 
 ---
 
@@ -268,7 +269,948 @@ src/
 
 ---
 
-## 5. 实现详解
+## 5. 方法调用流程
+
+本章节详细说明从用户登录到页面渲染，以及页面刷新后，各个方法的调用顺序和调用关系。
+
+### 5.1 用户登录流程 - 方法调用顺序
+
+#### 流程概览
+
+```
+用户点击登录按钮
+    ↓
+① handleLogin()           [composables/useLogin.js]
+    ↓
+② login()                 [api/user.js]
+    ↓
+③ setToken()              [utils/auth.js]
+    ↓
+④ setUserInfo()           [stores/user.js]
+    ↓
+⑤ initDynamicRoutes()     [router/dynamic-routes.js]
+    ↓
+⑥ buildRoutesFromMenus()  [router/dynamic-routes.js]
+    ↓
+⑦ mapMenuToRoute()        [router/dynamic-routes.js]
+    ↓
+⑧ resolveComponent()      [router/dynamic-routes.js]
+    ↓
+⑨ router.addRoute()       [Vue Router API]
+    ↓
+⑩ setHasLoadedAsyncRoutes() [stores/user.js]
+    ↓
+⑪ router.push()           [Vue Router API]
+    ↓
+⑫ router.beforeEach()     [router/index.js - 路由守卫]
+    ↓
+⑬ 渲染目标页面
+```
+
+#### 详细步骤说明
+
+**步骤 ①：handleLogin() - 触发登录**
+
+```javascript
+// 文件位置：src/composables/useLogin.js
+const handleLogin = async () => {
+    if (loginForm.uid && loginForm.password) {
+        // 👉 调用步骤 ②
+        const res = await login(loginForm)
+        
+        if (!res) {
+            ElMessage.error('登录失败，用户名或密码错误！')
+            return
+        }
+        
+        // 👉 调用步骤 ③
+        setToken(res.token)
+        
+        // 👉 调用步骤 ④
+        setUserInfo(res)
+        
+        // 👉 调用步骤 ⑤
+        initDynamicRoutes(router, res.menus)
+        
+        // 👉 调用步骤 ⑩
+        setHasLoadedAsyncRoutes(true)
+        
+        ElMessage.success('登录成功！')
+        
+        const firstPath = res?.menus?.[0]?.path || '/dashboard'
+        // 👉 调用步骤 ⑪
+        router.push(firstPath)
+    }
+}
+```
+
+**关键点：**
+- 用户交互的入口函数
+- 验证表单数据
+- 协调所有后续操作
+
+---
+
+**步骤 ②：login() - 调用登录接口**
+
+```javascript
+// 文件位置：src/api/user.js
+export const login = async (data) => {
+    // 发送登录请求到后端
+    const response = await request.post('/api/login', data)
+    return response.data
+}
+```
+
+**返回数据结构：**
+```javascript
+{
+    token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+    uid: "admin",
+    username: "管理员",
+    email: "admin@example.com",
+    role: "1",
+    avatar: "https://example.com/avatar.jpg",
+    menus: [  // 👈 关键数据
+        {
+            path: '/dashboard',
+            component: 'dashboard/index',
+            name: 'Dashboard',
+            menu_name: '首页',
+            icon: 'House'
+        },
+        // ... 更多菜单
+    ]
+}
+```
+
+---
+
+**步骤 ③：setToken() - 存储 Token**
+
+```javascript
+// 文件位置：src/utils/auth.js
+const setToken = (token) => {
+    localStorage.setItem('token', token)
+}
+```
+
+**作用：**
+- 将 token 存储到 localStorage
+- 用于后续 API 请求的身份验证
+
+---
+
+**步骤 ④：setUserInfo() - 存储用户信息**
+
+```javascript
+// 文件位置：src/stores/user.js
+const setUserInfo = (user) => {
+    userInfo.value = {
+        ...getDefaultUserInfo(),
+        ...user,
+        menus: Array.isArray(user?.menus) ? user.menus : []
+    }
+    // Pinia persist 插件会自动将数据持久化到 localStorage
+}
+```
+
+**作用：**
+- 将用户信息（包括 menus）存储到 Pinia Store
+- 自动持久化到 localStorage（persist: true）
+- 供全局访问使用
+
+---
+
+**步骤 ⑤：initDynamicRoutes() - 初始化动态路由**
+
+```javascript
+// 文件位置：src/router/dynamic-routes.js
+export const initDynamicRoutes = (router, menus = []) => {
+    // 👉 调用步骤 ⑥
+    const routes = buildRoutesFromMenus(menus)
+    
+    // 遍历生成的路由配置
+    routes.forEach((route) => {
+        if (!router.hasRoute(route.name)) {
+            // 👉 调用步骤 ⑨
+            router.addRoute('layout', route)
+        }
+    })
+    
+    return routes
+}
+```
+
+**作用：**
+- 将菜单数据转换为路由配置
+- 动态注册路由到 Vue Router
+
+---
+
+**步骤 ⑥：buildRoutesFromMenus() - 批量转换菜单**
+
+```javascript
+// 文件位置：src/router/dynamic-routes.js
+export const buildRoutesFromMenus = (menus = []) => {
+    // 👉 对每个菜单项调用步骤 ⑦
+    return menus.map((menu) => mapMenuToRoute(menu)).filter(Boolean)
+}
+```
+
+**作用：**
+- 遍历菜单数组
+- 为每个菜单项生成路由配置
+- 过滤掉无效的配置
+
+---
+
+**步骤 ⑦：mapMenuToRoute() - 菜单转路由**
+
+```javascript
+// 文件位置：src/router/dynamic-routes.js
+const mapMenuToRoute = (menu, parentPath = '') => {
+    // 验证必需字段
+    if (!menu?.path || !menu?.component) {
+        return null
+    }
+    
+    // 👉 调用步骤 ⑧
+    const component = resolveComponent(menu.component)
+    if (!component) {
+        console.warn(`[dynamic-route] 未找到组件: ${menu.component}`)
+        return null
+    }
+    
+    // 构建路径
+    const fullPath = menu.path.startsWith('/') 
+        ? menu.path 
+        : `${parentPath}/${menu.path}`.replace(/\/+/g, '/')
+    const routePath = fullPath.replace(/^\//, '')
+    
+    // 构建路由配置对象
+    const route = {
+        path: routePath,
+        name: menu.name || routePath.replace(/\//g, '_'),
+        component,  // 👈 从步骤 ⑧ 获得
+        meta: {
+            title: menu.meta?.title || menu.title || menu.name || routePath,
+            icon: menu.meta?.icon || menu.icon || '',
+            hidden: Boolean(menu.meta?.hidden || menu.hidden)
+        }
+    }
+    
+    // 递归处理子菜单
+    if (Array.isArray(menu.children) && menu.children.length > 0) {
+        route.children = menu.children
+            .map((child) => mapMenuToRoute(child, fullPath))  // 👈 递归调用自己
+            .filter(Boolean)
+    }
+    
+    return route
+}
+```
+
+**作用：**
+- 将单个菜单对象转换为路由配置对象
+- 解析组件路径
+- 构建路由元信息
+- 递归处理子菜单（支持多级菜单）
+
+---
+
+**步骤 ⑧：resolveComponent() - 解析组件**
+
+```javascript
+// 文件位置：src/router/dynamic-routes.js
+const resolveComponent = (viewPath) => {
+    // 规范化路径：'user/list' -> 'user/list.vue'
+    const normalized = normalizeViewPath(viewPath)
+    
+    // 构建完整 key
+    const key = `/src/views/${normalized}`
+    // 例如：'/src/views/dashboard/index.vue'
+    
+    // 从 viewModules 对象中获取对应的动态导入函数
+    const component = viewModules[key]
+    // 返回: () => import('/src/views/dashboard/index.vue')
+    
+    return component
+}
+```
+
+**作用：**
+- 根据组件路径字符串获取对应的组件导入函数
+- 实现组件懒加载
+
+---
+
+**步骤 ⑨：router.addRoute() - 注册路由**
+
+```javascript
+// Vue Router API
+router.addRoute('layout', route)
+```
+
+**参数说明：**
+- 第一个参数：`'layout'` - 父路由名称
+- 第二个参数：`route` - 要添加的子路由配置
+
+**作用：**
+- 将动态路由注册到 Vue Router 实例
+- 作为 'layout' 路由的子路由
+
+**路由结构：**
+```
+/                          (layout 父路由)
+├── dashboard              (动态添加)
+├── user/list              (动态添加)
+└── system/role            (动态添加)
+```
+
+---
+
+**步骤 ⑩：setHasLoadedAsyncRoutes() - 设置加载标记**
+
+```javascript
+// 文件位置：src/stores/user.js
+const setHasLoadedAsyncRoutes = (val) => {
+    hasLoadedAsyncRoutes.value = Boolean(val)
+}
+```
+
+**作用：**
+- 标记动态路由已加载
+- 防止重复加载
+- 该值会被持久化存储
+
+---
+
+**步骤 ⑪：router.push() - 页面跳转**
+
+```javascript
+// Vue Router API
+router.push(firstPath)
+// 例如：router.push('/dashboard')
+```
+
+**作用：**
+- 跳转到目标页面
+- 触发路由守卫（步骤 ⑫）
+
+---
+
+**步骤 ⑫：router.beforeEach() - 路由守卫**
+
+```javascript
+// 文件位置：src/router/index.js
+router.beforeEach((to, from, next) => {
+    const token = getToken()
+    
+    // 登录页直接放行
+    if (to.path === '/login') {
+        next()
+        return
+    }
+    
+    // 未登录跳转登录页
+    if (!token) {
+        next('/login')
+        return
+    }
+    
+    const userStore = useUserStore()
+    
+    // 判断是否需要加载动态路由
+    const needLoadRoutes = !userStore.hasLoadedAsyncRoutes 
+                        || !router.hasRoute(to.name)
+    
+    if (needLoadRoutes) {
+        // 这个分支在首次登录时不会进入（因为已经在步骤 ⑤ 加载过了）
+        // 主要用于页面刷新时重新加载路由
+    }
+    
+    // 👉 正常放行，渲染目标页面
+    next()
+})
+```
+
+**作用：**
+- 权限验证
+- 动态路由加载判断
+- 控制页面访问
+
+---
+
+**步骤 ⑬：渲染目标页面**
+
+当路由守卫放行后，Vue Router 会：
+1. 根据路由配置找到对应的组件
+2. 执行组件的动态导入函数（懒加载）
+3. 渲染组件到 `<router-view>`
+4. 同时触发菜单组件的渲染
+
+---
+
+### 5.2 页面刷新流程 - 方法调用顺序
+
+#### 流程概览
+
+```
+用户刷新页面（F5 或浏览器刷新按钮）
+    ↓
+① 应用重新初始化
+    - new Router() 创建新实例
+    - 动态路由丢失
+    ↓
+② Pinia 自动恢复数据
+    - userInfo（含 menus）
+    - hasLoadedAsyncRoutes
+    ↓
+③ router.beforeEach()     [router/index.js - 路由守卫]
+    ↓
+④ getToken()              [utils/auth.js]
+    ↓
+⑤ useUserStore()          [stores/user.js]
+    ↓
+⑥ router.hasRoute(to.name) 检查
+    ↓
+⑦ initDynamicRoutes()     [router/dynamic-routes.js]
+    ↓
+⑧ buildRoutesFromMenus()  [router/dynamic-routes.js]
+    ↓
+⑨ mapMenuToRoute()        [router/dynamic-routes.js]
+    ↓
+⑩ resolveComponent()      [router/dynamic-routes.js]
+    ↓
+⑪ router.addRoute()       [Vue Router API]
+    ↓
+⑫ setHasLoadedAsyncRoutes() [stores/user.js]
+    ↓
+⑬ next({...to, replace: true}) 重新导航
+    ↓
+⑭ 再次进入 router.beforeEach()
+    ↓
+⑮ 检查通过，放行 next()
+    ↓
+⑯ 渲染目标页面
+```
+
+#### 详细步骤说明
+
+**步骤 ①：应用重新初始化**
+
+```javascript
+// 文件位置：src/main.js
+const app = createApp(App)
+app.use(router)  // 👈 创建全新的 router 实例
+app.use(pinia)
+app.mount('#app')
+```
+
+**关键点：**
+- Router 实例是全新的，之前动态添加的路由全部丢失
+- 只包含静态路由（login 和 layout）
+
+---
+
+**步骤 ②：Pinia 自动恢复数据**
+
+```javascript
+// 文件位置：src/stores/user.js
+export const useUserStore = defineStore('userStore', () => {
+    // ...
+}, {
+    persist: true  // 👈 关键配置
+})
+```
+
+**作用：**
+- Pinia persist 插件自动从 localStorage 读取数据
+- 恢复 `userInfo`（包括 menus）
+- 恢复 `hasLoadedAsyncRoutes`（值为 true）
+
+**注意：**
+- 虽然 `hasLoadedAsyncRoutes` 为 true，但 router 实例是新的
+- 所以动态路由仍然需要重新注册
+
+---
+
+**步骤 ③：router.beforeEach() - 路由守卫触发**
+
+```javascript
+// 文件位置：src/router/index.js
+router.beforeEach((to, from, next) => {
+    // 页面刷新时，用户访问的是之前的路由，如 '/dashboard'
+    // to.path = '/dashboard'
+    // to.name = 'dashboard'
+    
+    // 👉 执行步骤 ④
+    const token = getToken()
+    
+    // ...
+})
+```
+
+---
+
+**步骤 ④：getToken() - 获取 Token**
+
+```javascript
+// 文件位置：src/utils/auth.js
+const getToken = () => {
+    return localStorage.getItem('token')
+}
+```
+
+**作用：**
+- 从 localStorage 读取 token
+- 验证用户是否已登录
+
+---
+
+**步骤 ⑤：useUserStore() - 获取用户信息**
+
+```javascript
+const userStore = useUserStore()
+// userStore.userInfo.menus 👈 包含菜单数据（已恢复）
+// userStore.hasLoadedAsyncRoutes 👈 为 true（已恢复）
+```
+
+---
+
+**步骤 ⑥：router.hasRoute(to.name) - 检查路由是否存在**
+
+```javascript
+const needLoadRoutes = !userStore.hasLoadedAsyncRoutes 
+                    || !router.hasRoute(to.name)
+// ↑ 第一个条件为 false（因为 hasLoadedAsyncRoutes 为 true）
+// ↑ 第二个条件为 true（因为动态路由丢失，router 中没有该路由）
+// ↑ 所以 needLoadRoutes = true
+```
+
+**关键判断：**
+```javascript
+if (needLoadRoutes) {
+    const menus = userStore.userInfo?.menus || []
+    
+    if (menus.length > 0) {
+        // 👉 执行步骤 ⑦：重新加载动态路由
+        initDynamicRoutes(router, menus)
+        
+        // 👉 执行步骤 ⑫
+        userStore.setHasLoadedAsyncRoutes(true)
+        
+        // 👉 执行步骤 ⑬：重新导航
+        next({ ...to, replace: true })
+        return
+    }
+}
+```
+
+**`next({ ...to, replace: true })` 的作用：**
+- 重新触发导航到目标路由
+- 此时动态路由已注册，可以正常访问
+- `replace: true` 表示替换当前历史记录
+
+---
+
+**步骤 ⑦-⑫：重新加载动态路由**
+
+这些步骤与首次登录时的步骤 ⑤-⑩ 完全相同：
+- ⑦ initDynamicRoutes()
+- ⑧ buildRoutesFromMenus()
+- ⑨ mapMenuToRoute()
+- ⑩ resolveComponent()
+- ⑪ router.addRoute()
+- ⑫ setHasLoadedAsyncRoutes()
+
+---
+
+**步骤 ⑬：next({...to, replace: true}) - 重新导航**
+
+```javascript
+next({ ...to, replace: true })
+// 等价于：
+next({
+    path: to.path,
+    query: to.query,
+    params: to.params,
+    replace: true
+})
+```
+
+**作用：**
+- 终止当前导航
+- 发起一个新的导航到相同目标
+- 此时路由已注册，可以正常匹配
+
+---
+
+**步骤 ⑭：再次进入 router.beforeEach()**
+
+重新导航会再次触发路由守卫：
+
+```javascript
+router.beforeEach((to, from, next) => {
+    const token = getToken()  // ✅ 有 token
+    
+    if (to.path === '/login') {  // ❌ 不是登录页
+        next()
+        return
+    }
+    
+    if (!token) {  // ❌ 有 token
+        next('/login')
+        return
+    }
+    
+    const userStore = useUserStore()
+    
+    const needLoadRoutes = !userStore.hasLoadedAsyncRoutes  // ✅ true
+                        || !router.hasRoute(to.name)  // ✅ true（路由已存在）
+    // needLoadRoutes = false
+    
+    if (needLoadRoutes) {  // ❌ 不进入
+        // ...
+    }
+    
+    // 👉 执行步骤 ⑮
+    next()  // ✅ 放行
+})
+```
+
+---
+
+**步骤 ⑮：next() - 放行**
+
+路由守卫检查通过，放行导航。
+
+---
+
+**步骤 ⑯：渲染目标页面**
+
+与首次登录的步骤 ⑬ 相同，渲染目标页面和菜单。
+
+---
+
+### 5.3 菜单渲染流程 - 方法调用顺序
+
+当用户信息中包含菜单数据时，菜单会自动渲染。
+
+#### 流程概览
+
+```
+Layout 组件挂载
+    ↓
+① Menus.vue 组件初始化
+    ↓
+② useMenus()              [composables/useMenus.js]
+    ↓
+③ useUserStore()          [stores/user.js]
+    ↓
+④ storeToRefs()           [pinia]
+    ↓
+⑤ computed: visibleMenus  [layout/Menus.vue]
+    - 过滤 hidden 菜单
+    ↓
+⑥ v-for 渲染 MenuItem 组件
+    ↓
+⑦ MenuItem.vue 初始化   [layout/MenuItem.vue]
+    ↓
+⑧ computed: hasChildren   检查是否有子菜单
+    ↓
+⑨ computed: menuTitle     获取菜单标题
+    ↓
+⑩ computed: menuIcon      获取菜单图标
+    ↓
+⑪ getMenuIcon()           [router/dynamic-routes.js]
+    ↓
+⑫ 渲染 el-menu-item 或 el-sub-menu
+    ↓
+⑬ 如果有子菜单，递归渲染 MenuItem
+    - 回到步骤 ⑦
+```
+
+#### 详细步骤说明
+
+**步骤 ①-④：获取用户信息**
+
+```vue
+<!-- 文件位置：src/layout/Menus.vue -->
+<script setup>
+import { useMenus } from '@/composables/useMenus'
+import { computed } from 'vue'
+import MenuItem from './MenuItem.vue'
+
+// 👉 步骤 ②
+const { userInfo } = useMenus()
+</script>
+```
+
+```javascript
+// 文件位置：src/composables/useMenus.js
+export function useMenus() {
+    // 👉 步骤 ③
+    const userStore = useUserStore()
+    
+    // 👉 步骤 ④
+    const { userInfo } = storeToRefs(userStore)
+    // storeToRefs 保持响应式引用
+    
+    return {
+        userInfo,
+        logout
+    }
+}
+```
+
+---
+
+**步骤 ⑤：computed: visibleMenus - 过滤菜单**
+
+```vue
+<!-- 文件位置：src/layout/Menus.vue -->
+<script setup>
+const visibleMenus = computed(() => {
+    // 过滤掉 hidden 为 true 的菜单
+    return userInfo.value?.menus?.filter(menu => !menu.hidden) || []
+})
+</script>
+```
+
+---
+
+**步骤 ⑥：v-for 渲染 MenuItem**
+
+```vue
+<!-- 文件位置：src/layout/Menus.vue -->
+<template>
+    <el-menu>
+        <!-- 遍历可见菜单，为每个菜单创建 MenuItem 组件 -->
+        <MenuItem 
+            v-for="menu in visibleMenus" 
+            :key="menu.path" 
+            :menu="menu" 
+        />
+    </el-menu>
+</template>
+```
+
+---
+
+**步骤 ⑦-⑩：MenuItem 组件初始化**
+
+```vue
+<!-- 文件位置：src/layout/MenuItem.vue -->
+<script setup>
+import { getMenuIcon } from '@/router/dynamic-routes'
+import { computed } from 'vue'
+
+const props = defineProps({
+    menu: {
+        type: Object,
+        required: true
+    }
+})
+
+// 👉 步骤 ⑧：判断是否有子菜单
+const hasChildren = computed(() => 
+    Array.isArray(props.menu.children) && props.menu.children.length > 0
+)
+
+// 👉 步骤 ⑨：获取菜单标题
+const menuTitle = computed(() => 
+    props.menu?.menu_name || '未命名菜单'
+)
+
+// 👉 步骤 ⑩：获取菜单图标
+const menuIcon = computed(() => 
+    getMenuIcon(props.menu?.meta?.icon || props.menu?.icon)  // 👉 调用步骤 ⑪
+)
+</script>
+```
+
+---
+
+**步骤 ⑪：getMenuIcon() - 获取图标组件**
+
+```javascript
+// 文件位置：src/router/dynamic-routes.js
+import * as ElementPlusIconsVue from '@element-plus/icons-vue'
+
+export const getMenuIcon = (iconName) => {
+    // 从 Element Plus 图标库中获取对应图标
+    return ElementPlusIconsVue[iconName] || ElementPlusIconsVue.Menu
+    // 例如：iconName = 'House' 返回 House 组件
+    //      iconName = undefined 返回 Menu 组件（默认）
+}
+```
+
+---
+
+**步骤 ⑫-⑬：渲染菜单项**
+
+```vue
+<!-- 文件位置：src/layout/MenuItem.vue -->
+<template>
+    <!-- 有子菜单：渲染子菜单 -->
+    <el-sub-menu v-if="hasChildren" :index="menu.path">
+        <template #title>
+            <el-icon>
+                <component :is="menuIcon" />  <!-- 动态图标组件 -->
+            </el-icon>
+            <span>{{ menuTitle }}</span>
+        </template>
+        
+        <!-- 👉 步骤 ⑬：递归渲染子菜单 -->
+        <MenuItem 
+            v-for="child in menu.children" 
+            :key="child.path" 
+            :menu="child"  <!-- 递归调用自己 -->
+        />
+    </el-sub-menu>
+
+    <!-- 无子菜单：渲染菜单项 -->
+    <el-menu-item v-else :index="menu.path">
+        <el-icon>
+            <component :is="menuIcon" />
+        </el-icon>
+        <span>{{ menuTitle }}</span>
+    </el-menu-item>
+</template>
+```
+
+**递归示例：**
+
+```
+菜单数据：
+{
+    menu_name: '系统管理',
+    icon: 'Setting',
+    children: [
+        { menu_name: '用户管理', icon: 'User' },
+        { menu_name: '角色管理', icon: 'Avatar' }
+    ]
+}
+
+渲染过程：
+1. 渲染 "系统管理" el-sub-menu（步骤 ⑦-⑫）
+2. 遍历 children，递归渲染：
+   - 渲染 "用户管理" el-menu-item（步骤 ⑦-⑫）
+   - 渲染 "角色管理" el-menu-item（步骤 ⑦-⑫）
+```
+
+---
+
+### 5.4 关键方法调用关系图
+
+```
+登录场景：
+handleLogin
+  ├─ login (API)
+  ├─ setToken
+  ├─ setUserInfo
+  ├─ initDynamicRoutes
+  │   ├─ buildRoutesFromMenus
+  │   │   └─ mapMenuToRoute (递归)
+  │   │       └─ resolveComponent
+  │   │           └─ normalizeViewPath
+  │   └─ router.addRoute
+  ├─ setHasLoadedAsyncRoutes
+  └─ router.push
+      └─ router.beforeEach
+          └─ next()
+
+刷新场景：
+router.beforeEach
+  ├─ getToken
+  ├─ useUserStore
+  ├─ router.hasRoute
+  ├─ initDynamicRoutes (如果需要)
+  │   ├─ buildRoutesFromMenus
+  │   │   └─ mapMenuToRoute
+  │   │       └─ resolveComponent
+  │   └─ router.addRoute
+  ├─ setHasLoadedAsyncRoutes
+  └─ next({...to, replace: true})
+      └─ router.beforeEach (再次)
+          └─ next()
+
+菜单渲染：
+Menus.vue
+  ├─ useMenus
+  │   └─ useUserStore
+  │       └─ storeToRefs
+  └─ computed: visibleMenus
+      └─ MenuItem.vue (递归)
+          ├─ computed: hasChildren
+          ├─ computed: menuTitle
+          └─ computed: menuIcon
+              └─ getMenuIcon
+```
+
+---
+
+### 5.5 时序图总结
+
+#### 登录时序
+
+```mermaid
+sequenceDiagram
+    participant User as 用户
+    participant Login as useLogin
+    participant API as 后端API
+    participant Store as userStore
+    participant Router as router
+    participant Guard as 路由守卫
+    participant Page as 页面组件
+    
+    User->>Login: 点击登录
+    Login->>API: login()
+    API-->>Login: 返回用户信息+menus
+    Login->>Store: setToken()
+    Login->>Store: setUserInfo()
+    Login->>Router: initDynamicRoutes(menus)
+    Router->>Router: 解析菜单，注册路由
+    Login->>Store: setHasLoadedAsyncRoutes(true)
+    Login->>Router: push(firstPath)
+    Router->>Guard: beforeEach()
+    Guard->>Guard: 检查通过
+    Guard->>Page: next() 放行
+    Page-->>User: 显示页面
+```
+
+#### 刷新时序
+
+```mermaid
+sequenceDiagram
+    participant User as 用户
+    participant Browser as 浏览器
+    participant Store as userStore
+    participant Guard as 路由守卫
+    participant Router as router
+    participant Page as 页面组件
+    
+    User->>Browser: 刷新页面 F5
+    Browser->>Store: Pinia persist 恢复数据
+    Store-->>Guard: userInfo.menus 存在
+    Browser->>Guard: beforeEach() 触发
+    Guard->>Router: hasRoute(to.name)?
+    Router-->>Guard: false (路由丢失)
+    Guard->>Router: initDynamicRoutes(menus)
+    Router->>Router: 重新注册路由
+    Guard->>Guard: next({...to, replace:true})
+    Guard->>Guard: beforeEach() 再次触发
+    Guard->>Router: hasRoute(to.name)?
+    Router-->>Guard: true (路由已存在)
+    Guard->>Page: next() 放行
+    Page-->>User: 显示页面
+```
+
+---
+
+## 6. 实现详解
 
 ### 5.1 动态路由生成模块 (dynamic-routes.js)
 
