@@ -31,6 +31,8 @@ const router = createRouter({
 
 
 router.beforeEach((to, from, next) => {
+    console.log('[router] 导航到:', to.path, '路由名称:', to.name)
+
     const token = getToken()
 
     // 如果要去登录页，直接放行
@@ -51,9 +53,15 @@ router.beforeEach((to, from, next) => {
     // 刷新页面后，即使 hasLoadedAsyncRoutes 为 true，路由也需要重新注册
     const needLoadRoutes = !userStore.hasLoadedAsyncRoutes || !router.hasRoute(to.name)
 
+    console.log('[router] hasLoadedAsyncRoutes:', userStore.hasLoadedAsyncRoutes)
+    console.log('[router] router.hasRoute(to.name):', router.hasRoute(to.name))
+    console.log('[router] needLoadRoutes:', needLoadRoutes)
+    console.log('[router] menus:', userStore.userInfo?.menus)
+
     if (needLoadRoutes) {
         const menus = userStore.userInfo?.menus || []
         if (menus.length > 0) {
+            console.log('[router] 开始加载动态路由...')
             initDynamicRoutes(router, menus)
             userStore.setHasLoadedAsyncRoutes(true)
             // 重新导航到目标路由，确保动态路由生效
@@ -61,6 +69,7 @@ router.beforeEach((to, from, next) => {
             return
         } else {
             // 没有菜单数据，跳转到登录页
+            console.warn('[router] 没有菜单数据，跳转登录页')
             next('/login')
             return
         }

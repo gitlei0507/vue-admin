@@ -28,6 +28,10 @@ import * as ElementPlusIconsVue from '@element-plus/icons-vue';
 import ElementPlus from 'element-plus';
 import zhCn from 'element-plus/dist/locale/zh-cn.mjs';
 
+// 导入动态路由初始化函数
+import { initDynamicRoutes } from '@/router/dynamic-routes';
+// 导入用户 Store
+import { useUserStore } from '@/stores/user';
 
 // 创建 Vue 应用实例
 const app = createApp(App)
@@ -44,6 +48,16 @@ app.use(ElementPlus, { locale: zhCn })
 const pinia = createPinia()
 pinia.use(piniaPluginPersistedstate)
 app.use(pinia)
+
+// 在挂载应用前预加载动态路由
+const userStore = useUserStore()
+const menus = userStore.userInfo?.menus || []
+if (menus.length > 0) {
+    console.log('[main] 预加载动态路由...')
+    initDynamicRoutes(router, menus)
+    userStore.setHasLoadedAsyncRoutes(true)
+}
+
 // 使用路由
 app.use(router)
 // 将应用挂载到 #app 元素上

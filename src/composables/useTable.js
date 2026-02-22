@@ -1,13 +1,21 @@
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { onMounted, ref } from 'vue'
 
-export function useTable(apiFn, searchForm, deleteUser) {
+export function useTable(apiFn, searchForm, deleteUser, defaultSort = {}) {
     const tableData = ref([])
     const loading = ref(false)
     // 分页参数
     const currentPage = ref(1)
     const pageSize = ref(5)
     const total = ref(0)
+    // 排序参数，支持默认值
+    // defaultSort.order 为 Element Plus 格式(ascending/descending)，需转换为后端格式(asc/desc)
+    const sortField = ref(defaultSort.prop || '')
+    const sortOrder = ref(
+        defaultSort.order
+            ? (defaultSort.order === 'ascending' ? 'asc' : 'desc')
+            : ''
+    )
 
     const normalizeListResult = (res) => {
         if (Array.isArray(res)) {
@@ -34,6 +42,13 @@ export function useTable(apiFn, searchForm, deleteUser) {
                 pageNum: currentPage.value,
                 pageSize: pageSize.value
             }
+
+            // 添加排序参数
+            if (sortField.value && sortOrder.value) {
+                payload.sortField = sortField.value
+                payload.sortOrder = sortOrder.value
+            }
+
             const res = await apiFn(payload)
             const { rows, total: totalCount } = normalizeListResult(res)
             tableData.value = rows
@@ -69,6 +84,22 @@ export function useTable(apiFn, searchForm, deleteUser) {
         fetchData()
     }
 
+    // 排序
+    const handleSortChange = ({ column, prop, order }) => {
+        // order: ascending(升序) / descending(降序) / null(取消排序)
+        // 只处理升序和降序，忽略取消排序的操作
+        if (!order) {
+            return
+        }
+
+        sortField.value = prop
+        // 将 Element Plus 的排序值转换为后端需要的格式
+        sortOrder.value = order === 'ascending' ? 'asc' : 'desc'
+
+        // 排序时回到第一页
+        currentPage.value = 1
+        fetchData()
+    }
 
     // 删除
     const handleDelete = (index, row, options = {}) => {
@@ -113,6 +144,7 @@ export function useTable(apiFn, searchForm, deleteUser) {
         resetSearch,
         handleDelete,
         handleCurrentChange,
-        handleSizeChange
+        handleSizeChange,
+        handleSortChange
     }
 }

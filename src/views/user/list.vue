@@ -25,12 +25,14 @@
 
             <!-- 数据表格容器 -->
             <div class="table-wrapper">
-                <el-table :data="tableData" v-loading="loading" stripe border style="width: 100%" height="100%">
+                <el-table :data="tableData" v-loading="loading" stripe border style="width: 100%" height="100%"
+                    :default-sort="{ prop: 'username', order: 'ascending' }" @sort-change="handleSortChange">
                     <el-table-column type="index" label="序号" width="70" align="center"
                         :index="(index) => (currentPage - 1) * pageSize + index + 1" />
-                    <el-table-column prop="username" label="姓名" width="200" align="center" />
-                    <el-table-column prop="email" label="邮箱" min-width="200" show-overflow-tooltip align="center" />
-                    <el-table-column label="角色" min-width="200" align="center">
+                    <el-table-column prop="username" label="姓名" width="200" align="center" sortable="custom" />
+                    <el-table-column prop="email" label="邮箱" min-width="200" show-overflow-tooltip align="center"
+                        sortable="custom" />
+                    <el-table-column prop="role" label="角色" min-width="200" align="center" sortable="custom">
                         <template #default="scope">
                             <el-tag v-if="scope.row.role === '1'" type="danger" effect="dark">管理员</el-tag>
                             <el-tag v-else-if="scope.row.role === '2'" type="success" effect="dark">普通用户</el-tag>
@@ -183,8 +185,9 @@
         resetSearch,
         handleDelete,
         handleCurrentChange,
-        handleSizeChange
-    } = useTable(list, searchForm, deleteUser)
+        handleSizeChange,
+        handleSortChange
+    } = useTable(list, searchForm, deleteUser, { prop: 'username', order: 'ascending' })
 
     const {
         dialogVisible,
