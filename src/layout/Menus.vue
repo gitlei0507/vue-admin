@@ -5,22 +5,22 @@
         </div>
         <el-menu router active-text-color="#ffd04b" background-color="#1f2937" class="el-menu-vertical-demo border-none"
             :default-active="$route.path" text-color="#fff">
-            <el-menu-item v-for="menu in userInfo.menus" :index="menu.path">
-                <el-icon>
-                    <component :is="menu.icon" />
-                </el-icon>
-                <span>{{ menu.menu_name }}</span>
-            </el-menu-item>
+            <MenuItem v-for="menu in visibleMenus" :key="menu.path" :menu="menu" />
         </el-menu>
     </el-aside>
 </template>
 
 <script setup>
     import { useMenus } from '@/composables/useMenus';
+    import { computed } from 'vue';
+    import MenuItem from './MenuItem.vue';
 
     const { userInfo } = useMenus()
 
-
+    // 从用户信息中获取菜单数据，过滤掉隐藏的菜单项
+    const visibleMenus = computed(() => {
+        return userInfo.value?.menus?.filter(menu => !menu.hidden) || []
+    })
 </script>
 
 <style scoped></style>

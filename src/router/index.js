@@ -1,14 +1,14 @@
+import { useUserStore } from '@/stores/user'
 import { useAuth } from '@/utils/auth'
 import { createRouter, createWebHistory } from 'vue-router'
+import { initDynamicRoutes } from './dynamic-routes'
 
 import Layout from '@/layout/index.vue'
-import Dashboard from '@/views/dashboard/index.vue'
 import Login from '@/views/login/index.vue'
-import UserList from '@/views/user/list.vue'
 
 const { getToken } = useAuth()
 
-const routes = [
+const staticRoutes = [
     {
         path: '/login',
         name: 'login',
@@ -16,27 +16,17 @@ const routes = [
     },
     {
         path: '/',
+        name: 'layout',
         component: Layout,
         redirect: '/dashboard', // 访问根路径时重定向到首页
-        children: [
-            {
-                path: 'dashboard',
-                name: 'dashboard',
-                component: Dashboard
-            },
-            {
-                path: '/user/list',
-                name: 'userList',
-                component: UserList
-            }
-        ]
+        children: []
     }
 ]
 
 
 const router = createRouter({
     history: createWebHistory(import.meta.env.BASE_URL),
-    routes
+    routes: staticRoutes
 })
 
 
@@ -46,14 +36,37 @@ router.beforeEach((to, from, next) => {
     // 如果要去登录页，直接放行
     if (to.path === '/login') {
         next()
-    } else {
-        // 如果要去其他页面，检查有没有 Token
-        if (token) {
-            next() // 有 Token，放行
+        return
+    }
+
+    // 没有 token 跳转到登录页
+    if (!token) {
+        next('/login')
+        return
+    }
+
+    const userStore = useUserStore()
+
+    // 检查是否需要加载动态路由
+    // 刷新页面后，即使 hasLoadedAsyncRoutes 为 true，路由也需要重新注册
+    const needLoadRoutes = !userStore.hasLoadedAsyncRoutes || !router.hasRoute(to.name)
+
+    if (needLoadRoutes) {
+        const menus = userStore.userInfo?.menus || []
+        if (menus.length > 0) {
+            initDynamicRoutes(router, menus)
+            userStore.setHasLoadedAsyncRoutes(true)
+            // 重新导航到目标路由，确保动态路由生效
+            next({ ...to, replace: true })
+            return
         } else {
-            next('/login') // 没 Token，强制踢回登录页
+            // 没有菜单数据，跳转到登录页
+            next('/login')
+            return
         }
     }
+
+    next()
 })
 
 export default router
