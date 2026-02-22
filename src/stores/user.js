@@ -10,7 +10,8 @@ export const useUserStore = defineStore('userStore', () => {
         username: '',
         email: '',
         role: '',
-        avatar: ''
+        avatar: '',
+        menus: []
     })
 
     const setUserInfo = (user) => userInfo.value = user

@@ -17,7 +17,7 @@ export function useUser(createUser, updateUser, handleSearch) {
         username: '',
         password: '',
         email: '',
-        role: 'user'
+        role: ''
     })
 
     // 表单校验
@@ -41,7 +41,7 @@ export function useUser(createUser, updateUser, handleSearch) {
         userForm.username = ''
         userForm.password = ''
         userForm.email = ''
-        userForm.role = 'user'
+        userForm.role = ''
         dialogVisible.value = true
         nextTick(() => userFormRef.value.clearValidate())
     }
@@ -57,7 +57,7 @@ export function useUser(createUser, updateUser, handleSearch) {
         userForm.username = row.username || ''
         userForm.password = row.password || ''
         userForm.email = row.email || ''
-        userForm.role = row.role || 'user'
+        userForm.role = row.role || ''
         dialogVisible.value = true
         nextTick(() => userFormRef.value?.clearValidate())
     }
@@ -71,7 +71,7 @@ export function useUser(createUser, updateUser, handleSearch) {
         userForm.username = row.username || ''
         userForm.password = row.password || ''
         userForm.email = row.email || ''
-        userForm.role = row.role || 'user'
+        userForm.role = row.role || ''
         dialogVisible.value = true
     }
 

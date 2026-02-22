@@ -30,7 +30,13 @@
                         :index="(index) => (currentPage - 1) * pageSize + index + 1" />
                     <el-table-column prop="username" label="姓名" width="200" align="center" />
                     <el-table-column prop="email" label="邮箱" min-width="200" show-overflow-tooltip align="center" />
-                    <el-table-column prop="role" label="角色" min-width="200" align="center" />
+                    <el-table-column label="角色" min-width="200" align="center">
+                        <template #default="scope">
+                            <el-tag v-if="scope.row.role === '1'" type="danger" effect="dark">管理员</el-tag>
+                            <el-tag v-else-if="scope.row.role === '2'" type="success" effect="dark">普通用户</el-tag>
+                            <span v-else>{{ scope.row.role }}</span>
+                        </template>
+                    </el-table-column>
 
                     <el-table-column label="操作" width="240" align="center" fixed="right">
                         <template #default="scope">
@@ -51,9 +57,11 @@
 
             <!-- 分页栏区域 -->
             <div class="pagination-container">
-                <el-pagination v-model:current-page="currentPage" v-model:page-size="pageSize"
-                    :page-sizes="[5, 10, 20, 50]" background layout="total, sizes, prev, pager, next, jumper"
-                    :total="total" @current-change="handleCurrentChange" @size-change="handleSizeChange" />
+                <div class="pagination-wrapper">
+                    <el-pagination v-model:current-page="currentPage" v-model:page-size="pageSize"
+                        :page-sizes="[5, 10, 20, 50]" background layout="total, sizes, prev, pager, next, jumper"
+                        :total="total" @current-change="handleCurrentChange" @size-change="handleSizeChange" />
+                </div>
             </div>
         </el-card>
     </div>
@@ -116,13 +124,13 @@
                             <Avatar />
                         </el-icon>
                     </template>
-                    <el-option label="管理员" value="admin">
+                    <el-option label="管理员" value="1">
                         <el-icon style="vertical-align: middle; margin-right: 8px;">
                             <Star />
                         </el-icon>
                         <span>管理员</span>
                     </el-option>
-                    <el-option label="普通用户" value="user">
+                    <el-option label="普通用户" value="2">
                         <el-icon style="vertical-align: middle; margin-right: 8px;">
                             <User />
                         </el-icon>
@@ -192,10 +200,6 @@
         rules
     } = useUser(createUser, updateUser, handleSearch)
 
-
-
-
-
 </script>
 
 <style scoped>
@@ -253,6 +257,17 @@
         justify-content: flex-end;
         flex-shrink: 0;
         border-top: 1px solid #f0f0f0;
+    }
+
+    .pagination-wrapper {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .page-jump-btn {
+        font-weight: bold;
+        min-width: 40px;
     }
 
     :deep(.el-card__body) {
@@ -328,5 +343,12 @@
         background-color: #f5f7fa;
         box-shadow: 0 0 0 1px #e4e7ed inset;
         cursor: default;
+    }
+
+    /* 禁用 el-tag 过渡动画 */
+    :deep(.el-tag) {
+        transition: none !important;
+        min-width: 80px;
+        justify-content: center;
     }
 </style>
