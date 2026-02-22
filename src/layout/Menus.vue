@@ -5,24 +5,22 @@
         </div>
         <el-menu router active-text-color="#ffd04b" background-color="#1f2937" class="el-menu-vertical-demo border-none"
             :default-active="$route.path" text-color="#fff">
-            <el-menu-item index="/dashboard">
+            <el-menu-item v-for="menu in userInfo.menus" :index="menu.path">
                 <el-icon>
-                    <House />
+                    <component :is="menu.icon" />
                 </el-icon>
-                <span>首页</span>
-            </el-menu-item>
-            <el-menu-item index="/user/list">
-                <el-icon>
-                    <User />
-                </el-icon>
-                <span>用户管理</span>
+                <span>{{ menu.menu_name }}</span>
             </el-menu-item>
         </el-menu>
     </el-aside>
 </template>
 
 <script setup>
-    import { House, User } from '@element-plus/icons-vue';
+    import { useMenus } from '@/composables/useMenus';
+
+    const { userInfo } = useMenus()
+
+
 </script>
 
 <style scoped></style>

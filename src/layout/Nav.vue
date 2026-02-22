@@ -11,9 +11,9 @@
 </template>
 
 <script setup>
-    import { useMenus } from '@/composables/useMenus';
+    import { useNav } from '@/composables/useNav';
 
-    const { userInfo, showRole, logout } = useMenus()
+    const { userInfo, showRole, logout } = useNav()
 </script>
 
 <style scoped></style>
