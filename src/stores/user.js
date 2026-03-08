@@ -1,3 +1,4 @@
+import { buildMenuTree } from '@/utils/menu'
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
 
@@ -22,7 +23,7 @@ export const useUserStore = defineStore('userStore', () => {
         userInfo.value = {
             ...getDefaultUserInfo(),
             ...user,
-            menus: Array.isArray(user?.menus) ? user.menus : []
+            menus: buildMenuTree(user?.menus)
         }
     }
 

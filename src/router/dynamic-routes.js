@@ -4,6 +4,7 @@
  */
 
 // 导入 Element Plus 所有图标组件，用于菜单图标的动态渲染
+import { flattenMenus } from '@/utils/menu';
 import * as ElementPlusIconsVue from '@element-plus/icons-vue';
 
 /**
@@ -154,7 +155,7 @@ const mapMenuToRoute = (menu, parentPath = '') => {
  * ]
  */
 export const buildRoutesFromMenus = (menus = []) => {
-    return menus.map((menu) => mapMenuToRoute(menu)).filter(Boolean)
+    return flattenMenus(menus).map((menu) => mapMenuToRoute(menu)).filter(Boolean)
 }
 
 /**
