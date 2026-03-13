@@ -101,8 +101,9 @@ const mapMenuToRoute = (menu, parentPath = '') => {
     }
 
     // 构建完整路径：如果菜单路径以 / 开头则直接使用，否则拼接父路径
-    // 使用正则表达式将多个连续斜杠替换为单个斜杠
+    // 使用正则表达式将多个连续斜杠替换为单个斜杠，fullPath的值举例：/user/list
     const fullPath = menu.path.startsWith('/') ? menu.path : `${parentPath}/${menu.path}`.replace(/\/+/g, '/')
+
 
     // 去除路径开头的斜杠，得到最终的路由路径
     const routePath = fullPath.replace(/^\//, '')

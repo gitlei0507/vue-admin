@@ -27,6 +27,7 @@ export const buildMenuTree = (menus = []) => {
 
     collectMenus(menus)
 
+
     const menuMap = new Map()
 
     flatMenus.forEach((menu) => {
@@ -49,6 +50,7 @@ export const buildMenuTree = (menus = []) => {
 
         roots.push(menu)
     })
+
 
     const sortMenus = (items) => {
         items.sort((a, b) => (a.sort_no ?? 0) - (b.sort_no ?? 0))
