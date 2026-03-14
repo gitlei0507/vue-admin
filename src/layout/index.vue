@@ -9,6 +9,9 @@
                 <!-- 导航组件 -->
                 <Nav></Nav>
 
+                <!-- 标签导航 -->
+                <TagsView></TagsView>
+
                 <!-- 主体部分 -->
                 <el-main class="bg-gray-50">
                     <router-view />
@@ -21,4 +24,5 @@
 <script setup>
     import Menus from './Menus.vue';
     import Nav from './Nav.vue';
+    import TagsView from './TagsView.vue';
 </script>
