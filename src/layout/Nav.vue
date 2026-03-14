@@ -1,6 +1,6 @@
 <template>
     <el-header class="border-b flex items-center justify-between px-4 bg-white">
-        <div class="text-gray-600">面包屑导航 (待实现)</div>
+        <div class="text-gray-600"></div>
         <div class="flex items-center gap-2">
             <el-avatar :size="30" :src="userInfo.avatar" />
             <span class="text-sm">用户：{{ userInfo.username }}</span>
