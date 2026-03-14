@@ -35,7 +35,7 @@ router.beforeEach((to, from, next) => {
 
     const token = getToken()
 
-    // 如果要去登录页，直接放行
+    // 如果是去登录页，直接放行
     if (to.path === '/login') {
         next()
         return

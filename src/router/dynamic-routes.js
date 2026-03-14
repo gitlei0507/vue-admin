@@ -44,8 +44,9 @@ const mapMenuToRoute = (menu, parentPath = '') => {
         return null
     }
 
-    // 拼接完整路径并合并多余斜杠
+    // 拼接完整路径并合并多余斜杠，例如：/user/list
     const fullPath = menu.path.startsWith('/') ? menu.path : `${parentPath}/${menu.path}`.replace(/\/+/g, '/')
+
 
 
     const routePath = fullPath.replace(/^\//, '')
