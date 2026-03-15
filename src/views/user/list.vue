@@ -211,7 +211,9 @@
     .user-list-container {
         padding: 20px;
         background-color: #f0f2f5;
-        height: calc(100vh - 120px);
+        height: 100%;
+        min-height: 0;
+        box-sizing: border-box;
         display: flex;
         flex-direction: column;
     }
