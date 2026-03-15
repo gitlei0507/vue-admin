@@ -9,20 +9,31 @@ export function list(data) {
     })
 }
 
-// 新增snmp服务器接口
+// 新增snmp服务器
 export function createSnmpServer(data) {
     return request({
-        url: '/ipcsnmpserver/create',
+        url: '/ipcsnmpserver/add',
         method: 'post',
         data
     })
 }
 
-// 修改snmp服务器接口
+// 修改snmp服务器
 export function updateSnmpServer(data) {
     return request({
         url: '/ipcsnmpserver/update',
         method: 'post',
         data
+    })
+}
+
+// 删除snmp服务器
+export function deleteSnmpServer(row) {
+    return request({
+        url: '/ipcsnmpserver/delete',
+        method: 'post',
+        data: {
+            servercode: row.servercode
+        }
     })
 }

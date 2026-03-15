@@ -48,8 +48,10 @@
                             <el-button link type="primary" size="small" @click="openEditDialog(scope.row)" :icon="Edit">
                                 编辑
                             </el-button>
-                            <el-button link type="danger" size="small" @click="handleDelete(scope.$index, scope.row)"
-                                :icon="Delete">
+                            <el-button link type="danger" size="small" @click="handleDelete(scope.$index, scope.row, {
+                                // nameField: 'username',
+                                // confirmText: '确认要删除用户'
+                            }, deleteUser)" :icon="Delete">
                                 删除
                             </el-button>
                         </template>
@@ -187,7 +189,7 @@
         handleCurrentChange,
         handleSizeChange,
         handleSortChange
-    } = useTable(list, searchForm, deleteUser, { prop: 'username', order: 'ascending' })
+    } = useTable(list, searchForm, { prop: 'username', order: 'ascending' })
 
     const {
         dialogVisible,

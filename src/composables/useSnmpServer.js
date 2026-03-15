@@ -1,5 +1,5 @@
 import { ElMessage } from "element-plus"
-import { nextTick, reactive, ref } from "vue"
+import { nextTick, reactive, ref, watch } from "vue"
 
 
 export function useSnmpServer(createSnmpServer, updateSnmpServer, handleSearch) {
@@ -9,6 +9,9 @@ export function useSnmpServer(createSnmpServer, updateSnmpServer, handleSearch) 
     const snmpServerFormRef = ref()
     const isEdit = ref(false)
     const isView = ref(false)
+    const isV3 = ref(true)
+    const isCertPwdReadonly = ref(false)
+    const isEncryptPwdReadonly = ref(false)
 
     // 初始化表单数据
     const snmpServerForm = reactive({
@@ -26,17 +29,94 @@ export function useSnmpServer(createSnmpServer, updateSnmpServer, handleSearch) 
         memo: '',
     })
 
+    // 根据版本动态切换v3/v2c表单区域
+    watch(
+        () => snmpServerForm.ver,
+        (val) => {
+            isV3.value = val === 'v3'
+        }
+    )
+
+    // 监视认证方式
+    watch(
+        () => snmpServerForm.certmethod,
+        (val) => {
+            if (val === '99') {
+                // 将认证密码设置为只读
+                isCertPwdReadonly.value = true
+                snmpServerForm.certpwd = ''
+                nextTick(() => snmpServerFormRef.value?.clearValidate(['certpwd']))
+                return
+            }
+
+            isCertPwdReadonly.value = false
+            nextTick(() => snmpServerFormRef.value?.clearValidate(['certpwd']))
+        }
+    )
+
+    // 监视加密方式
+    watch(
+        () => snmpServerForm.encryptmethod,
+        (val) => {
+            if (val === '99') {
+                // 将认加密密码设置为只读
+                isEncryptPwdReadonly.value = true
+                snmpServerForm.encryptpwd = ''
+                nextTick(() => snmpServerFormRef.value?.clearValidate(['encryptpwd']))
+                return
+            }
+
+            isEncryptPwdReadonly.value = false
+            nextTick(() => snmpServerFormRef.value?.clearValidate(['certpwd']))
+        }
+    )
+
     // 表单校验
     const rules = {
         ver: [{ required: true, message: '请输入版本', trigger: 'blur' }],
         servername: [{ required: true, message: '请输入服务器名称', trigger: 'blur' }],
         serverip: [{ required: true, message: '请输入服务器IP', trigger: 'blur' }],
         port: [{ required: true, message: '请输入端口', trigger: 'blur' }],
-        username: [{ required: true, message: '请输入v3安全用户名', trigger: 'blur' }],
-        certmethod: [{ required: true, message: '请输入认证方式', trigger: 'blur' }],
-        certpwd: [{ required: true, message: '请输入认证密码', trigger: 'blur' }],
-        encryptmethod: [{ required: true, message: '请输入加密方式', trigger: 'blur' }],
-        community: [{ required: true, message: '请输入v2c团体名', trigger: 'blur' }],
+        username: [{
+            validator: (rule, value, callback) => {
+                if (snmpServerForm.ver === 'v3' && value === '') {
+                    callback(new Error('请输入v3安全用户名'))
+                    return
+                }
+                callback()
+            },
+            trigger: 'blur'
+        }],
+        certpwd: [{
+            validator: (rule, value, callback) => {
+                if (snmpServerForm.certmethod !== '99' && value === '') {
+                    callback(new Error('请输入认证密码'))
+                    return
+                }
+                callback()
+            },
+            trigger: 'blur'
+        }],
+        encryptpwd: [{
+            validator: (rule, value, callback) => {
+                if (snmpServerForm.encryptmethod !== '99' && value === '') {
+                    callback(new Error('请输入加密密码'))
+                    return
+                }
+                callback()
+            },
+            trigger: 'blur'
+        }],
+        community: [{
+            validator: (rule, value, callback) => {
+                if (snmpServerForm.ver === 'v2c' && value === '') {
+                    callback(new Error('请输入v2c团体名'))
+                    return
+                }
+                callback()
+            },
+            trigger: 'blur'
+        }],
 
     }
 
@@ -45,14 +125,14 @@ export function useSnmpServer(createSnmpServer, updateSnmpServer, handleSearch) 
         isEdit.value = false
         isView.value = false
         snmpServerForm.servercode = ''
-        snmpServerForm.ver = ''
+        snmpServerForm.ver = 'v3'
         snmpServerForm.servername = ''
         snmpServerForm.serverip = ''
         snmpServerForm.port = '161'
         snmpServerForm.username = ''
-        snmpServerForm.certmethod = ''
+        snmpServerForm.certmethod = '1'
         snmpServerForm.certpwd = ''
-        snmpServerForm.encryptmethod = ''
+        snmpServerForm.encryptmethod = '4'
         snmpServerForm.encryptpwd = ''
         snmpServerForm.community = ''
         snmpServerForm.memo = ''
@@ -65,7 +145,7 @@ export function useSnmpServer(createSnmpServer, updateSnmpServer, handleSearch) 
         isEdit.value = true
         isView.value = false
         snmpServerForm.servercode = row.servercode || ''
-        snmpServerForm.ver = row.ver || ''
+        snmpServerForm.ver = row.ver || 'v3'
         snmpServerForm.servername = row.servername || ''
         snmpServerForm.serverip = row.serverip || ''
         snmpServerForm.port = row.port || '161'
@@ -77,7 +157,7 @@ export function useSnmpServer(createSnmpServer, updateSnmpServer, handleSearch) 
         snmpServerForm.community = row.community || ''
         snmpServerForm.memo = row.memo || ''
         dialogVisible.value = true
-        nextTick(() => userFormRef.value?.clearValidate())
+        nextTick(() => snmpServerFormRef.value?.clearValidate())
     }
 
     // 打开查看弹窗
@@ -85,7 +165,7 @@ export function useSnmpServer(createSnmpServer, updateSnmpServer, handleSearch) 
         isEdit.value = false
         isView.value = true
         snmpServerForm.servercode = row.servercode || ''
-        snmpServerForm.ver = row.ver || ''
+        snmpServerForm.ver = row.ver || 'v3'
         snmpServerForm.servername = row.servername || ''
         snmpServerForm.serverip = row.serverip || ''
         snmpServerForm.port = row.port || '161'
@@ -101,7 +181,7 @@ export function useSnmpServer(createSnmpServer, updateSnmpServer, handleSearch) 
 
     // 提交表单
     const submitForm = async () => {
-        if (!userFormRef.value) return
+        if (!snmpServerFormRef.value) return
 
         const valid = await snmpServerFormRef.value.validate().catch(() => false)
         if (!valid) return
@@ -110,20 +190,23 @@ export function useSnmpServer(createSnmpServer, updateSnmpServer, handleSearch) 
         const action = isEdit.value ? '修改' : '新增'
         try {
             const apiFn = isEdit.value ? updateSnmpServer : createSnmpServer
-            const res = await apiFn(userForm)
+            const res = await apiFn(snmpServerForm)
             if (res == 1) {
-                ElMessage.success(`${action}用户成功`)
+                ElMessage.success(`${action}SNMP服务器成功`)
                 dialogVisible.value = false
                 handleSearch()
             } else {
-                ElMessage.error(`${action}用户失败`)
+                ElMessage.error(`${action}SNMP服务器失败`)
             }
         } catch (error) {
-            ElMessage.error(`${action}用户失败：${error.message || error}`)
+            ElMessage.error(`${action}SNMP服务器失败：${error.message || error}`)
         } finally {
             submitLoading.value = false
         }
     }
+
+
+
 
     return {
         dialogVisible,
@@ -132,6 +215,9 @@ export function useSnmpServer(createSnmpServer, updateSnmpServer, handleSearch) 
         snmpServerFormRef,
         isEdit,
         isView,
+        isV3,
+        isCertPwdReadonly,
+        isEncryptPwdReadonly,
         openAddDialog,
         openEditDialog,
         openViewDialog,

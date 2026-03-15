@@ -66,8 +66,10 @@
                             <el-button link type="primary" size="small" @click="openEditDialog(scope.row)" :icon="Edit">
                                 编辑
                             </el-button>
-                            <el-button link type="danger" size="small" @click="handleDelete(scope.$index, scope.row)"
-                                :icon="Delete">
+                            <el-button link type="danger" size="small" @click="handleDelete(scope.$index, scope.row, {
+                                nameField: 'servername',
+                                confirmText: '确认要删除SNMP服务器'
+                            }, deleteSnmpServer)" :icon="Delete">
                                 删除
                             </el-button>
                         </template>
@@ -90,15 +92,19 @@
     <!-- snmp服务器表单弹窗 -->
     <el-dialog v-model="dialogVisible" :title="isView ? 'SNMP服务器配置-查看' : (isEdit ? 'SNMP服务器配置-编辑' : 'SNMP服务器配置-新增')"
         width="800px" :close-on-click-modal="false" :destroy-on-close="true" draggable>
-        <el-form :model="userForm" ref="snmpServerFormRef" :rules="rules" label-width="90px" class="user-form">
+        <el-form :model="snmpServerForm" ref="snmpServerFormRef" :rules="rules" label-width="120px" class="user-form">
             <el-form-item label="servercode" prop="servercode" v-show="false">
                 <el-input v-model="snmpServerForm.servercode" />
             </el-form-item>
 
             <el-form-item label="SNMP版本" prop="ver">
-                <el-input v-model="snmpServerForm.ver" placeholder="请输入SNMP版本" :readonly="isView" clearable
-                    size="large">
-                </el-input>
+                <el-select v-model="snmpServerForm.ver" placeholder="请选择SNMP版本" :disabled="isView || isEdit"
+                    style="width: 100%" size="large">
+                    <el-option label="v2c" value="v2c">
+                    </el-option>
+                    <el-option label="v3" value="v3">
+                    </el-option>
+                </el-select>
             </el-form-item>
 
             <el-form-item label="服务器名称" prop="servername">
@@ -112,43 +118,61 @@
                 </el-input>
             </el-form-item>
             <el-form-item label="端口" prop="port">
-                <el-input v-model="snmpServerForm.port" placeholder="请输入端口" :readonly="isView" clearable size="large">
-                </el-input>
-            </el-form-item>
-            <el-form-item label="v3安全用户名" prop="username">
-                <el-input v-model="snmpServerForm.username" placeholder="请输入v3安全用户名" :readonly="isView" clearable
-                    size="large">
-                </el-input>
-            </el-form-item>
-            <el-form-item label="认证方式" prop="certmethod">
-                <el-input v-model="snmpServerForm.certmethod" placeholder="请输入认证方式" :readonly="isView" clearable
-                    size="large">
-                </el-input>
-            </el-form-item>
-            <el-form-item label="认证密码" prop="certpwd">
-                <el-input v-model="snmpServerForm.certpwd" placeholder="请输入认证密码" :readonly="isView" clearable
-                    size="large">
-                </el-input>
-            </el-form-item>
-            <el-form-item label="加密方式" prop="encryptmethod">
-                <el-input v-model="snmpServerForm.encryptmethod" placeholder="请输入加密方式" :readonly="isView" clearable
-                    size="large">
-                </el-input>
-            </el-form-item>
-            <el-form-item label="加密密码" prop="encryptpwd">
-                <el-input v-model="snmpServerForm.encryptpwd" placeholder="请输入加密密码" :readonly="isView" clearable
+                <el-input v-model.number="snmpServerForm.port" placeholder="请输入端口" :readonly="isView" clearable
                     size="large">
                 </el-input>
             </el-form-item>
 
-            <el-form-item label="v2c团体名" prop="community">
-                <el-input v-model="snmpServerForm.community" placeholder="请输入v2c团体名" :readonly="isView" clearable
-                    size="large">
-                </el-input>
-            </el-form-item>
+            <template v-if="isV3">
+                <el-form-item label="v3安全用户名" prop="username">
+                    <el-input v-model="snmpServerForm.username" placeholder="请输入v3安全用户名" :readonly="isView" clearable
+                        size="large">
+                    </el-input>
+                </el-form-item>
+                <el-form-item label="认证方式" prop="certmethod">
+                    <el-select v-model="snmpServerForm.certmethod" placeholder="请选择认证方式" :disabled="isView"
+                        style="width: 100%" size="large">
+                        <el-option label="SHA" value="1"></el-option>
+                        <el-option label="MD5" value="2"></el-option>
+                        <el-option label="SHA2-256" value="3"></el-option>
+                        <el-option label="不认证" value="99"></el-option>
+                    </el-select>
+                </el-form-item>
+                <el-form-item label="认证密码" prop="certpwd">
+                    <el-input v-model="snmpServerForm.certpwd" placeholder="请输入认证密码"
+                        :readonly="isView || isCertPwdReadonly" clearable size="large">
+                    </el-input>
+                </el-form-item>
+                <el-form-item label="加密方式" prop="encryptmethod">
+                    <el-select v-model="snmpServerForm.encryptmethod" placeholder="请选择认证方式" :disabled="isView"
+                        style="width: 100%" size="large">
+                        <el-option label="3DES" value="1"></el-option>
+                        <el-option label="AES-128" value="2"></el-option>
+                        <el-option label="AES-192" value="3"></el-option>
+                        <el-option label="AES-256" value="4"></el-option>
+                        <el-option label="DES-56" value="5"></el-option>
+                        <el-option label="不加密" value="99"></el-option>
+                    </el-select>
+                </el-form-item>
+                <el-form-item label="加密密码" prop="encryptpwd">
+                    <el-input v-model="snmpServerForm.encryptpwd" placeholder="请输入加密密码"
+                        :readonly="isView || isEncryptPwdReadonly" clearable size="large">
+                    </el-input>
+                </el-form-item>
+            </template>
+
+            <template v-else>
+                <el-form-item label="v2c团体名" prop="community">
+                    <el-input v-model="snmpServerForm.community" placeholder="请输入v2c团体名" :readonly="isView" clearable
+                        size="large">
+                    </el-input>
+                </el-form-item>
+            </template>
+
 
             <el-form-item label="备注" prop="memo">
-                <el-input v-model="snmpServerForm.memo" placeholder="请输入备注" :readonly="isView" clearable size="large">
+                <el-input v-model="snmpServerForm.memo" type="textarea" :rows="3" resize="none" placeholder="请输入备注"
+                    :readonly="isView" size="large">
                 </el-input>
             </el-form-item>
 
@@ -175,7 +199,7 @@
 </template>
 
 <script setup>
-    import { createSnmpServer, list, updateSnmpServer } from '@/api/snmpServer';
+    import { createSnmpServer, deleteSnmpServer, list, updateSnmpServer } from '@/api/snmpServer';
     import { useSnmpServer } from '@/composables/useSnmpServer';
     import { useTable } from '@/composables/useTable';
     import { Delete, Edit, Plus, Refresh, Search, View } from '@element-plus/icons-vue';
@@ -202,7 +226,7 @@
         handleCurrentChange,
         handleSizeChange,
         handleSortChange
-    } = useTable(list, searchForm, null, { prop: 'serverip', order: 'ascending' })
+    } = useTable(list, searchForm, { prop: 'serverip', order: 'ascending' })
 
     const {
         dialogVisible,
@@ -211,6 +235,9 @@
         snmpServerFormRef,
         isEdit,
         isView,
+        isV3,
+        isCertPwdReadonly,
+        isEncryptPwdReadonly,
         openAddDialog,
         openEditDialog,
         openViewDialog,
@@ -353,6 +380,13 @@
     }
 
     :deep(.el-input[readonly] .el-input__inner) {
+        color: #606266;
+        cursor: default;
+    }
+
+    :deep(.el-textarea__inner[readonly]) {
+        background-color: #f5f7fa;
+        box-shadow: 0 0 0 1px #e4e7ed inset;
         color: #606266;
         cursor: default;
     }

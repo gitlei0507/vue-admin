@@ -1,7 +1,7 @@
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { onMounted, ref } from 'vue'
 
-export function useTable(apiFn, searchForm, deleteUser, defaultSort = {}) {
+export function useTable(apiFn, searchForm, defaultSort = {}) {
     const tableData = ref([])
     const loading = ref(false)
     // 分页参数
@@ -102,12 +102,13 @@ export function useTable(apiFn, searchForm, deleteUser, defaultSort = {}) {
     }
 
     // 删除
-    const handleDelete = (index, row, options = {}) => {
+    const handleDelete = (index, row, options = {}, callback) => {
 
-        const { nameField = 'username', confirmText = '确定要删除用户', onSuccess } = options
+        const { nameField = '', confirmText = '确定要删除', onSuccess } = options
+        const msg = row?.[nameField] ? `【${row?.[nameField]}】` : ''
 
         ElMessageBox.confirm(
-            `${confirmText} 【${row[nameField]}】 吗？`,
+            `${confirmText}${msg}吗？`,
             '警告',
             {
                 confirmButtonText: '确定',
@@ -116,15 +117,15 @@ export function useTable(apiFn, searchForm, deleteUser, defaultSort = {}) {
             }
         ).then(async () => {
             try {
-                const res = await deleteUser(row)
+                const res = await callback(row)
                 if (res === 1) {
-                    ElMessage.success('删除用户成功')
+                    ElMessage.success('删除成功')
                     handleSearch()
                 } else {
-                    ElMessage.error('删除用户失败')
+                    ElMessage.error('删除失败')
                 }
             } catch (error) {
-                ElMessage.error(`删除用户失败：${error.message || error}`)
+                ElMessage.error(`删除失败：${error.message || error}`)
             }
         }).catch(() => {
             // 点击取消
