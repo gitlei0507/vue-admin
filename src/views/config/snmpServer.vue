@@ -32,6 +32,21 @@
                 <el-button type="primary" @click="openAddDialog" :icon="Plus">新增</el-button>
                 <el-button type="warning" @click="handleToolbarEdit" :icon="Edit">编辑</el-button>
                 <el-button type="danger" @click="handleToolbarDelete" :icon="Delete">删除</el-button>
+                <el-dropdown class="more-action-dropdown" popper-class="more-action-dropdown-menu"
+                    @command="handleMoreActionCommand">
+                    <el-button type="info">
+                        更多操作
+                        <el-icon class="el-icon--right">
+                            <ArrowDown />
+                        </el-icon>
+                    </el-button>
+                    <template #dropdown>
+                        <el-dropdown-menu>
+                            <el-dropdown-item command="enable">启用</el-dropdown-item>
+                            <el-dropdown-item command="disable">停用</el-dropdown-item>
+                        </el-dropdown-menu>
+                    </template>
+                </el-dropdown>
             </div>
 
             <!-- 数据列表容器 -->
@@ -209,7 +224,7 @@
     import { createSnmpServer, deleteSnmpServer, list, updateSnmpServer } from '@/api/snmpServer';
     import { useSnmpServer } from '@/composables/useSnmpServer';
     import { useTable } from '@/composables/useTable';
-    import { Delete, Edit, Plus, Refresh, Search, View } from '@element-plus/icons-vue';
+    import { ArrowDown, Delete, Edit, Plus, Refresh, Search, View } from '@element-plus/icons-vue';
     import { reactive } from 'vue';
 
     const searchForm = reactive({
@@ -297,6 +312,40 @@
         display: flex;
         align-items: center;
         flex-shrink: 0;
+    }
+
+    .toolbar :deep(.more-action-dropdown) {
+        margin-left: 12px;
+    }
+
+    .toolbar :deep(.more-action-dropdown) {
+        margin-left: 12px;
+    }
+
+    .toolbar :deep(.more-action-dropdown .el-button) {
+        width: 100px;
+    }
+
+    .toolbar :deep(.more-action-dropdown .el-button--info) {
+        --el-button-bg-color: #909399;
+        --el-button-border-color: #909399;
+        --el-button-hover-bg-color: #7f8288;
+        --el-button-hover-border-color: #7f8288;
+        --el-button-active-bg-color: #6f7278;
+        --el-button-active-border-color: #6f7278;
+    }
+
+    :global(.more-action-dropdown-menu .el-dropdown-menu) {
+        width: 100px;
+        min-width: 100px;
+        box-sizing: border-box;
+    }
+
+    :global(.more-action-dropdown-menu .el-dropdown-menu__item) {
+        width: 100px;
+        min-width: 100px;
+        box-sizing: border-box;
+        justify-content: center;
     }
 
     .table-wrapper {
