@@ -13,7 +13,10 @@
                     <el-input v-model="searchForm.ver" placeholder="请输入版本" clearable class="!w-48" />
                 </el-form-item>
                 <el-form-item label="是否启用">
-                    <el-input v-model="searchForm.enable" placeholder="请输入是否启用" clearable class="!w-48" />
+                    <el-select v-model="searchForm.enable" placeholder="请选择是否启用" clearable class="!w-48">
+                        <el-option label="是" value="1"></el-option>
+                        <el-option label="否" value="0"></el-option>
+                    </el-select>
                 </el-form-item>
                 <el-form-item>
                     <el-button type="primary" @click="handleSearch" :icon="Search">查询</el-button>
@@ -27,6 +30,8 @@
             <!-- 操作栏 -->
             <div class="toolbar">
                 <el-button type="primary" @click="openAddDialog" :icon="Plus">新增</el-button>
+                <el-button type="warning " @click="openAddDialog" :icon="Edit">编辑</el-button>
+                <el-button type="danger  " @click="openAddDialog" :icon="Delete">删除</el-button>
             </div>
 
             <!-- 数据表格容器 -->
@@ -286,7 +291,6 @@
     .toolbar {
         margin-bottom: 16px;
         display: flex;
-        justify-content: space-between;
         align-items: center;
         flex-shrink: 0;
     }
