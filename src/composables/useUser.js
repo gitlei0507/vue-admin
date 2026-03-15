@@ -48,8 +48,6 @@ export function useUser(createUser, updateUser, handleSearch) {
 
     // 打开修改弹窗并重置表单
     const openEditDialog = (row) => {
-        console.log('@@', row);
-
         isEdit.value = true
         isView.value = false
         userForm.id = row.id || ''
