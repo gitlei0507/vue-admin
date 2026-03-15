@@ -30,16 +30,18 @@
             <!-- 操作栏 -->
             <div class="toolbar">
                 <el-button type="primary" @click="openAddDialog" :icon="Plus">新增</el-button>
-                <el-button type="warning " @click="openAddDialog" :icon="Edit">编辑</el-button>
-                <el-button type="danger  " @click="openAddDialog" :icon="Delete">删除</el-button>
+                <el-button type="warning" @click="handleToolbarEdit" :icon="Edit">编辑</el-button>
+                <el-button type="danger" @click="handleToolbarDelete" :icon="Delete">删除</el-button>
             </div>
 
-            <!-- 数据表格容器 -->
+            <!-- 数据列表容器 -->
             <div class="table-wrapper">
                 <el-table :data="tableData" v-loading="loading" stripe border style="width: 100%" height="100%"
-                    :default-sort="{ prop: 'username', order: 'ascending' }" @sort-change="handleSortChange">
-                    <el-table-column type="index" label="序号" width="70" align="center"
+                    :default-sort="{ prop: 'serverip', order: 'ascending' }" @sort-change="handleSortChange"
+                    @selection-change="handleSelectionChange">
+                    <el-table-column type="index" label="" width="70" align="center"
                         :index="(index) => (currentPage - 1) * pageSize + index + 1" />
+                    <el-table-column type="selection" width="55" align="center" />
                     <el-table-column prop="servername" label="服务器名称" width="200" align="center" sortable="custom" />
                     <el-table-column prop="serverip" label="服务器IP" min-width="200" show-overflow-tooltip align="center"
                         sortable="custom" />
@@ -218,7 +220,6 @@
     })
 
 
-
     const {
         tableData,
         loading,
@@ -246,6 +247,9 @@
         openAddDialog,
         openEditDialog,
         openViewDialog,
+        handleSelectionChange,
+        handleToolbarEdit,
+        handleToolbarDelete,
         submitForm,
         rules
     } = useSnmpServer(createSnmpServer, updateSnmpServer, handleSearch)

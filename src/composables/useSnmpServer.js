@@ -142,6 +142,8 @@ export function useSnmpServer(createSnmpServer, updateSnmpServer, handleSearch) 
 
     // 打开修改弹窗并重置表单
     const openEditDialog = (row) => {
+        console.log(222);
+
         isEdit.value = true
         isView.value = false
         snmpServerForm.servercode = row.servercode || ''
@@ -205,6 +207,22 @@ export function useSnmpServer(createSnmpServer, updateSnmpServer, handleSearch) 
         }
     }
 
+    const selectedRows = ref([])
+
+    const handleSelectionChange = (rows) => {
+        selectedRows.value = rows
+    }
+
+    const handleToolbarEdit = () => {
+
+        if (selectedRows.value.length !== 1) {
+            ElMessage.warning('请选择一条数据进行编辑')
+            return
+        }
+
+        openEditDialog(selectedRows.value[0])
+    }
+
 
 
 
@@ -221,6 +239,8 @@ export function useSnmpServer(createSnmpServer, updateSnmpServer, handleSearch) 
         openAddDialog,
         openEditDialog,
         openViewDialog,
+        handleToolbarEdit,
+        handleSelectionChange,
         submitForm,
         rules
     }
